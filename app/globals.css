@@ -1,0 +1,386 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    --variable-highlight: 142 76% 90%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --variable-highlight: 142 76% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Educational styling for BASIC interpreter */
+.variable-highlight {
+  animation: variable-highlight 0.5s ease-out;
+}
+
+.array-cell {
+  @apply border border-array-border bg-white dark:bg-gray-800;
+  transition: all 0.3s ease;
+}
+
+.array-cell.accessed {
+  @apply border-2 border-array shadow-lg;
+}
+
+.console-output {
+  @apply font-mono text-sm bg-console text-console-text;
+}
+
+/* Monaco Editor theming */
+.monaco-editor {
+  @apply rounded-md border;
+}
+
+/* CSS Custom Properties */
+:root {
+  --monaco-font-size: 14px;
+}
+
+/* Monaco Editor Font Size Override */
+.monaco-editor .view-lines {
+  font-size: var(--monaco-font-size) !important;
+}
+
+/* VS Code Activity Bar styling */
+.activity-bar-item {
+  @apply w-14 h-14 flex items-center justify-center relative transition-colors duration-150 ease-in-out;
+  color: #858585;
+}
+
+.activity-bar-item:hover {
+  color: #cccccc;
+}
+
+.activity-bar-item.active {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.activity-bar-item.available:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #cccccc;
+}
+
+.activity-bar-item.disabled {
+  color: #4a4a4a;
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.activity-bar-item.disabled:hover {
+  color: #4a4a4a;
+  background-color: transparent;
+}
+
+.activity-bar-indicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 100%;
+  background-color: #007acc;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Enhanced slider with better accessibility */
+.slider-enhanced {
+  background: linear-gradient(to right, #0e639c 0%, #0e639c 50%, #464647 50%, #464647 100%);
+  border: 2px solid #6e6e6e;
+  border-radius: 6px;
+  outline: none;
+}
+
+.slider-enhanced:focus {
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+}
+
+.slider-enhanced::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #0e639c;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.slider-enhanced::-webkit-slider-thumb:hover {
+  background: #f0f0f0;
+  border-color: #1177bb;
+  transform: scale(1.1);
+}
+
+.slider-enhanced::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #0e639c;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Focus indicators for accessibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #007acc;
+  outline-offset: 2px;
+}
+
+/* Visible Scrollbars */
+.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: #464647 #2d2d30;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #2d2d30;
+  border-radius: 4px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #464647;
+  border-radius: 4px;
+  border: 1px solid #2d2d30;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #6e6e6e;
+}
+
+.scrollbar-visible::-webkit-scrollbar-corner {
+  background: #2d2d30;
+}
+
+/* Professional Speed Slider Styling */
+.speed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.speed-slider::-webkit-slider-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 3px;
+}
+
+.speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 2px;
+  background: #ffffff;
+  border: 2px solid #0e639c;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.speed-slider::-webkit-slider-thumb:hover {
+  background: #0e639c;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.speed-slider::-moz-range-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 3px;
+  border: none;
+}
+
+.speed-slider::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 2px;
+  background: #ffffff;
+  border: 2px solid #0e639c;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.speed-slider::-moz-range-thumb:hover {
+  background: #0e639c;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Unified Button System */
+.btn-primary {
+  height: 40px;
+  padding: 0 16px;
+  background-color: #0e639c;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover {
+  background-color: #1177bb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  height: 40px;
+  padding: 0 16px;
+  background-color: #d73a49;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-danger:hover {
+  background-color: #cb2431;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  height: 40px;
+  padding: 0 16px;
+  background-color: transparent;
+  color: #e1e1e1;
+  border: 1px solid #6e6e6e;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  background-color: #464647;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+  border-color: #8e8e8e;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary:disabled:hover {
+  transform: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: transparent;
+  border-color: #6e6e6e;
+}
+
+.btn-small {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.btn-icon-only {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.btn-icon-only.btn-small {
+  width: 36px;
+  height: 36px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .activity-bar-item {
+    border: 1px solid currentColor;
+  }
+  
+  .btn-primary, .btn-danger, .btn-secondary {
+    border-width: 2px;
+  }
+}

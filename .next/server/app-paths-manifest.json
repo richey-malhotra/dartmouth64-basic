@@ -1,0 +1,6 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(protected)/editor/page": "app/(protected)/editor/page.js",
+  "/(protected)/settings/page": "app/(protected)/settings/page.js",
+  "/(protected)/files/page": "app/(protected)/files/page.js"
+}
