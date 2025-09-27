@@ -4,60 +4,88 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
-    --primary: 221 83% 53%;
+    --background: 220 35% 96%;
+    --foreground: 222 47% 12%;
+    --card: 220 32% 99%;
+    --card-foreground: 222 47% 12%;
+    --popover: 220 32% 99%;
+    --popover-foreground: 222 47% 12%;
+    --primary: 199 88% 56%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84% 60%;
+    --secondary: 222 25% 88%;
+    --secondary-foreground: 222 47% 20%;
+    --muted: 222 16% 86%;
+    --muted-foreground: 222 25% 32%;
+    --accent: 282 82% 62%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 80% 58%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: 222 20% 84%;
+    --input: 222 20% 84%;
+    --ring: 199 88% 56%;
     --radius: 0.5rem;
 
-    /* Modern & Focused Theme */
-    --action: 158 79% 42%; /* Engaging Green */
-    --action-foreground: 0 0% 100%;
-    --variable-highlight: 158 79% 90%;
-    --variable-highlight-border: 158 79% 42%;
+    /* AI-inspired accent system */
+    --accent-cyan: 199 88% 56%;
+    --accent-cyan-foreground: 210 40% 98%;
+    --accent-magenta: 282 82% 62%;
+    --accent-magenta-foreground: 210 40% 98%;
+  --accent-emerald: 155 82% 44%;
+  --accent-emerald-foreground: 144 30% 96%;
+  --accent-amber: 33 96% 56%;
+  --accent-amber-foreground: 26 100% 10%;
+
+    /* Surface treatments */
+    --surface-glass: rgba(230, 235, 245, 0.65);
+    --surface-glass-strong: rgba(217, 222, 235, 0.78);
+    --surface-divider: rgba(33, 36, 46, 0.12);
+    --glow-cyan: rgba(75, 192, 255, 0.28);
+    --glow-magenta: rgba(201, 93, 245, 0.24);
+
+    --variable-highlight: 199 88% 92%;
+    --variable-highlight-border: 199 88% 42%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
+    --background: 222 32% 7%;
+    --foreground: 210 40% 96%;
+    --card: 222 28% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 28% 12%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 199 88% 56%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 222 25% 16%;
+    --secondary-foreground: 210 30% 86%;
+    --muted: 222 20% 18%;
+    --muted-foreground: 222 14% 64%;
+    --accent: 282 82% 62%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 50%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --border: 222 20% 24%;
+    --input: 222 20% 24%;
+    --ring: 199 88% 56%;
 
-    /* Modern & Focused Theme */
-    --action: 158 64% 42%; /* Engaging Green */
-    --action-foreground: 0 0% 100%;
-    --variable-highlight: 158 64% 20%;
-    --variable-highlight-border: 158 64% 52%;
+    /* AI-inspired accent system */
+    --accent-cyan: 199 90% 55%;
+    --accent-cyan-foreground: 210 40% 98%;
+    --accent-magenta: 282 85% 64%;
+    --accent-magenta-foreground: 210 40% 98%;
+  --accent-emerald: 155 70% 46%;
+  --accent-emerald-foreground: 144 30% 96%;
+  --accent-amber: 33 95% 58%;
+  --accent-amber-foreground: 26 100% 10%;
+
+    /* Surface treatments */
+    --surface-glass: rgba(17, 21, 31, 0.68);
+    --surface-glass-strong: rgba(12, 16, 25, 0.82);
+    --surface-divider: rgba(119, 135, 164, 0.14);
+    --glow-cyan: rgba(75, 192, 255, 0.35);
+    --glow-magenta: rgba(201, 93, 245, 0.28);
+
+    --variable-highlight: 199 74% 20%;
+    --variable-highlight-border: 199 88% 58%;
   }
 
   * {
@@ -69,6 +97,118 @@
 }
 
 @layer components {
+  .glass-panel {
+    background: var(--surface-glass);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--surface-divider);
+  }
+
+  .glass-panel-strong {
+    background: var(--surface-glass-strong);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid var(--surface-divider);
+  }
+
+  .accent-glow {
+    box-shadow: 0 0 0 1px var(--surface-divider),
+      0 12px 40px -18px var(--glow-cyan),
+      0 6px 24px -10px var(--glow-magenta);
+  }
+
+  .ai-button {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    isolation: isolate;
+    background: transparent;
+    color: #f6f0ff;
+    box-shadow: 0 20px 42px -24px rgba(142, 106, 255, 0.85);
+    border: none;
+  }
+
+  .ai-button:hover {
+    background: transparent;
+    color: #f6f0ff;
+  }
+
+  .ai-button::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: conic-gradient(from 0deg, rgba(147, 92, 255, 0.85), rgba(75, 192, 255, 0.75), rgba(255, 128, 214, 0.75), rgba(147, 92, 255, 0.85));
+    animation: ai-border-spin 8s linear infinite;
+    transform-origin: center;
+    opacity: 0.85;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .ai-button::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: rgba(16, 14, 31, 0.92);
+    transition: background 0.3s ease, opacity 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .ai-button:hover::after {
+    background: rgba(24, 19, 42, 0.94);
+    opacity: 0.98;
+  }
+
+  .ai-button svg,
+  .ai-button span {
+    position: relative;
+    z-index: 2;
+  }
+
+  .ai-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.9rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #f6f0ff;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .ai-chip::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: conic-gradient(from 0deg, rgba(147, 92, 255, 0.85), rgba(75, 192, 255, 0.75), rgba(255, 128, 214, 0.75), rgba(147, 92, 255, 0.85));
+    animation: ai-border-spin 12s linear infinite;
+    opacity: 0.85;
+    z-index: 0;
+  }
+
+  .ai-chip::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: rgba(16, 14, 31, 0.92);
+    z-index: 1;
+  }
+
+  .ai-chip > * {
+    position: relative;
+    z-index: 2;
+  }
+
   .activity-bar-item {
     @apply flex items-center justify-center h-14 w-14 cursor-pointer relative;
     color: hsl(var(--muted-foreground));
@@ -91,5 +231,11 @@
   .activity-bar-indicator {
     @apply absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full;
     background-color: hsl(var(--action));
+  }
+}
+
+@keyframes ai-border-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

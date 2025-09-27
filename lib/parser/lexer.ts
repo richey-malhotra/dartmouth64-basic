@@ -1,4 +1,4 @@
-import { createToken, Lexer, CstParser, IToken } from 'chevrotain'
+import { createToken, Lexer } from 'chevrotain'
 
 // Token definitions for Dartmouth 64 BASIC
 // Following historical 1964 specification

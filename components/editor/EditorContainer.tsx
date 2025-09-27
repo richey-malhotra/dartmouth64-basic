@@ -6,15 +6,15 @@ import { ControlPanel } from './ControlPanel'
 import { EducationalPanel } from './EducationalPanel'
 import { AISummaryBar } from './AISummaryBar'
 import { StatusBar } from './StatusBar'
+import { InputPanel } from './InputPanel'
+import type {
+  ArrayState,
+  InterpreterLike,
+  VariableState
+} from './types'
 
-// Temporary type definitions until parser is fully integrated
-interface ExecutionState {
-  currentLine: number | null
-  isRunning: boolean
-  variables: Map<string, any>
-  arrays: Map<string, any>
-  consoleOutput: string[]
-}
+type VariablesMap = Map<string, VariableState>
+type ArraysMap = Map<string, ArrayState>
 
 export function EditorContainer({
   setStatus,
@@ -49,9 +49,9 @@ export function EditorContainer({
     }
   }, [isRunning, setStatus]);
   
-  const [variables, setVariables] = useState(() => {
+  const [variables, setVariables] = useState<VariablesMap>(() => {
     // Demo variables for UI testing - lots to test scrolling
-    const vars = new Map()
+    const vars: VariablesMap = new Map()
     vars.set('A', { name: 'A', value: 5, type: 'number', changed: true })
     vars.set('B', { name: 'B', value: 10, type: 'number' })
     vars.set('C', { name: 'C', value: 15, type: 'number' })
@@ -81,9 +81,9 @@ export function EditorContainer({
     vars.set('NAME$', { name: 'NAME$', value: 'HELLO', type: 'string' })
     return vars
   })
-  const [arrays, setArrays] = useState(() => {
+  const [arrays, setArrays] = useState<ArraysMap>(() => {
     // Demo arrays for UI testing - multiple arrays to test scrolling
-    const arrs = new Map()
+    const arrs: ArraysMap = new Map()
     
     // Small array
     const arrayX = {
@@ -94,8 +94,8 @@ export function EditorContainer({
       ]),
       recentlyAccessed: new Set(['3']),
       recentlyChanged: new Set(['3']),
-      bounds: [[1, 5]],
-      type: 'number'
+      bounds: [[1, 5]] as [number, number][],
+  type: 'number' as const
     }
     arrs.set('X', arrayX)
     
@@ -110,8 +110,8 @@ export function EditorContainer({
       ]),
       recentlyAccessed: new Set(['7', '8']),
       recentlyChanged: new Set(['7', '8']),
-      bounds: [[1, 15]],
-      type: 'number'
+      bounds: [[1, 15]] as [number, number][],
+  type: 'number' as const
     }
     arrs.set('Y', arrayY)
     
@@ -125,8 +125,8 @@ export function EditorContainer({
       ]),
       recentlyAccessed: new Set(['2', '5']),
       recentlyChanged: new Set(['2', '5']),
-      bounds: [[1, 8]],
-      type: 'string'
+      bounds: [[1, 8]] as [number, number][],
+  type: 'string' as const
     }
     arrs.set('N$', arrayN)
     
@@ -143,8 +143,8 @@ export function EditorContainer({
       ]),
       recentlyAccessed: new Set(['12', '13', '14']),
       recentlyChanged: new Set(['12', '13', '14']),
-      bounds: [[1, 25]],
-      type: 'number'
+      bounds: [[1, 25]] as [number, number][],
+  type: 'number' as const
     }
     arrs.set('SCORES', arrayZ)
     
@@ -159,23 +159,14 @@ export function EditorContainer({
     'X(2) = 4',
     'X(3) = 6'
   ])
-  const [speed, setSpeed] = useState(1000)
   const [isAwaitingInput, setIsAwaitingInput] = useState(false)
   const [inputPrompt, setInputPrompt] = useState('')
   const inputPromiseResolveRef = useRef<((value: string) => void) | null>(null)
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 })
   
-  const interpreterRef = useRef<any>(null)
+  const interpreterRef = useRef<InterpreterLike | null>(null)
 
   // Handle execution state updates
-  const handleStateUpdate = useCallback((state: ExecutionState) => {
-    setCurrentLine(state.currentLine)
-    setVariables(new Map(state.variables))
-    setArrays(new Map(state.arrays))
-    setConsoleOutput([...state.consoleOutput])
-    setIsRunning(state.isRunning)
-  }, [])
-
   // Handle input requests (for INPUT statements)
   const handleInputRequest = useCallback(async (prompt: string): Promise<string> => {
     setInputPrompt(prompt)
@@ -206,7 +197,7 @@ export function EditorContainer({
       setConsoleOutput([`SYNTAX ERROR: ${error}`])
       return null
     }
-  }, [code, speed, handleStateUpdate, handleInputRequest])
+  }, [])
 
   // Control handlers
   const handleRun = useCallback(async () => {
@@ -224,7 +215,11 @@ export function EditorContainer({
         const name = await handleInputRequest('?')
         setConsoleOutput(prev => [...prev, `> ${name}`])
         // Update variables
-        setVariables(prev => new Map(prev).set('N$', { name: 'N$', value: name, type: 'string', changed: true }))
+        setVariables(prev => {
+          const next = new Map(prev)
+          next.set('N$', { name: 'N$', value: name, type: 'string', changed: true })
+          return next
+        })
 
         setTimeout(async () => {
           setCurrentLine(30)
@@ -238,7 +233,11 @@ export function EditorContainer({
               setCurrentLine(50)
               const age = await handleInputRequest('?')
               setConsoleOutput(prev => [...prev, `> ${age}`])
-              setVariables(prev => new Map(prev).set('AGE', { name: 'AGE', value: Number(age), type: 'number', changed: true }))
+              setVariables(prev => {
+                const next = new Map(prev)
+                next.set('AGE', { name: 'AGE', value: Number(age), type: 'number', changed: true })
+                return next
+              })
 
               setTimeout(() => {
                 const ageNum = Number(age)
@@ -296,7 +295,7 @@ export function EditorContainer({
       console.error('Runtime error:', error)
       setConsoleOutput(prev => [...prev, `ERROR: ${error}`])
     }
-  }, [createInterpreter, currentLine])
+  }, [currentLine])
 
   const handleStop = useCallback(() => {
     if (interpreterRef.current) {
@@ -308,10 +307,10 @@ export function EditorContainer({
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-[#1e1e1e]">
-      <div className="flex-1 flex min-h-0">
+    <div className="h-full flex flex-col bg-gradient-to-br from-[#090d16] via-[#0d111c] to-[#0f1524]">
+      <div className="flex-1 flex min-h-0 gap-6 px-4 pb-6">
         {/* Main Editor Area - 60% width */}
-        <div className="w-[60%] flex flex-col min-w-0">
+  <div className="w-[60%] flex flex-col min-w-0 min-h-0 gap-4 pt-4">
           {/* Control Panel */}
           <ControlPanel
             isRunning={isRunning}
@@ -322,16 +321,16 @@ export function EditorContainer({
               setCurrentLine(null)
               setIsRunning(false)
               setConsoleOutput([])
-              setVariables(new Map())
-              setArrays(new Map())
+              setVariables(new Map<string, VariableState>())
+              setArrays(new Map<string, ArrayState>())
             }}
             onNew={() => {
               setCode('')
               setCurrentLine(null)
               setIsRunning(false)
               setConsoleOutput([])
-              setVariables(new Map())
-              setArrays(new Map())
+              setVariables(new Map<string, VariableState>())
+              setArrays(new Map<string, ArrayState>())
             }}
             onSave={() => {
               // TODO: Implement save functionality
@@ -364,7 +363,7 @@ export function EditorContainer({
           />
           
           {/* Monaco Editor - Fills remaining space */}
-          <div className="flex-1 border-t border-[#3e3e42] pt-2">
+          <div className="flex-1 min-h-0 rounded-3xl glass-panel border border-surface-divider/70 shadow-[0_22px_50px_-35px_rgba(12,18,32,0.8)] overflow-hidden">
             <MonacoBasicEditor
               value={code}
               onChange={setCode}
@@ -381,25 +380,29 @@ export function EditorContainer({
             version={version || 'v1.0.0'}
             user={user || 'user'}
           />
-
-          {/* AI Summary Bar */}
-          <div className="h-[20%] border-t border-[#3e3e42]">
-            <AISummaryBar
-              summary="This program asks for the user's name and age, then provides a response based on their age."
-            />
-          </div>
         </div>
 
         {/* Educational Panel - 40% width */}
-        <div className="w-[40%] border-l border-[#2d2d30] bg-[#252526] flex flex-col">
+        <div className="w-[40%] flex flex-col pt-4 pr-2 min-h-0">
           <EducationalPanel
             variables={variables}
             arrays={arrays}
             consoleOutput={consoleOutput}
-            isRunning={isRunning}
+          />
+        </div>
+      </div>
+
+      <div className="px-4 pb-6 flex gap-6">
+        <div className="w-[60%] flex-shrink-0">
+          <AISummaryBar
+            summary="This program asks for the user's name and age, then provides a response based on their age."
+          />
+        </div>
+        <div className="w-[40%] flex-shrink-0 pr-2">
+          <InputPanel
+            prompt={inputPrompt}
             isAwaitingInput={isAwaitingInput}
-            inputPrompt={inputPrompt}
-            onInputSubmit={handleInputSubmit}
+            onSubmit={handleInputSubmit}
           />
         </div>
       </div>

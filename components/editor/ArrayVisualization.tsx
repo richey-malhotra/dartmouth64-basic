@@ -1,31 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
-interface ArrayState {
-  name: string
-  dimensions: number[]
-  values: Map<string, any>
-  recentlyAccessed: Set<string>
-  bounds: [number, number][]
-  type: 'number' | 'string'
-}
+import { cn } from '@/lib/utils'
+import type { ArrayState, ScalarValue } from './types'
 
 interface ArrayVisualizationProps {
   arrays: Map<string, ArrayState>
-  currentLine?: number | null
 }
 
-export function ArrayVisualization({ arrays, currentLine }: ArrayVisualizationProps) {
+export function ArrayVisualization({ arrays }: ArrayVisualizationProps) {
   const arrayEntries = Array.from(arrays.entries())
 
   if (arrayEntries.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
-        <div className="text-center">
-          <div className="text-2xl mb-2">📊</div>
-          <div className="text-sm">No arrays yet</div>
-          <div className="text-xs mt-1">Use DIM to create arrays</div>
+      <div className="h-full flex items-center justify-center text-muted-foreground/70">
+        <div className="glass-panel border border-surface-divider/70 rounded-2xl px-6 py-5 text-center shadow-[0_18px_38px_-28px_rgba(16,24,46,0.85)]">
+          <div className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/60">Arrays</div>
+          <div className="text-base text-foreground/85 mt-2">No arrays yet</div>
+          <div className="text-xs text-muted-foreground/70 mt-1 uppercase tracking-wider">Use <span className="text-accentMagenta">DIM</span> to allocate</div>
         </div>
       </div>
     )
@@ -34,7 +25,7 @@ export function ArrayVisualization({ arrays, currentLine }: ArrayVisualizationPr
   return (
     <div className="h-full flex flex-col">
       {/* Array Visualization */}
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4 pr-3">
         {arrayEntries.map(([name, array]) => (
           <ArrayGrid key={name} array={array} />
         ))}
@@ -52,32 +43,41 @@ function ArrayGrid({ array }: { array: ArrayState }) {
     const size = end - start + 1
     
     return (
-      <div className="p-3 rounded-lg border-2 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          {name}({dimensions[0]}) - 1D Array
+      <div className="glass-panel-strong border border-surface-divider/70 rounded-2xl px-4 py-4 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-sm font-semibold text-foreground/90 tracking-wide">{name}</div>
+            <div className="text-xs uppercase tracking-[0.28em] text-muted-foreground/60">1D · {dimensions[0]} elements</div>
+          </div>
+          <div className="text-[0.65rem] uppercase tracking-[0.25em] text-accentMagenta/70">Bounds {start}-{end}</div>
         </div>
         
-        <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(size, 10)}, 1fr)` }}>
+        <div
+          className="grid gap-1.5"
+          style={{ gridTemplateColumns: `repeat(${Math.min(size, 10)}, minmax(78px, 1fr))` }}
+        >
           {Array.from({ length: size }, (_, i) => {
             const index = start + i
             const key = `${index}`
-            const value = values.get(key) ?? (type === 'string' ? '' : 0)
+            const fallbackValue: ScalarValue = type === 'string' ? '' : 0
+            const value = values.get(key) ?? fallbackValue
             const isAccessed = recentlyAccessed.has(key)
+            const isChanged = array.recentlyChanged?.has(key)
             
             return (
               <div
                 key={index}
-                className={`array-cell p-2 text-center text-xs font-mono min-h-[40px] flex items-center justify-center rounded-lg border-2 transition-colors duration-300 ${
-                  isAccessed 
-                    ? 'animate-variable-highlight-border' 
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={cn(
+                  'array-cell h-[72px] flex flex-col items-center justify-center rounded-xl border border-surface-divider/70 bg-[rgba(11,16,27,0.85)] transition-all duration-300 shadow-[0_8px_18px_-14px_rgba(12,20,34,0.85)]',
+                  isAccessed && 'animate-variable-highlight-border border-[rgba(75,192,255,0.65)] shadow-[0_16px_32px_-20px_rgba(75,192,255,0.6)]',
+                  isChanged && 'border-[rgba(201,93,245,0.65)] shadow-[0_16px_32px_-18px_rgba(201,93,245,0.6)]'
+                )}
               >
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-[10px]">
+                  <div className="text-muted-foreground/60 text-[0.65rem] uppercase tracking-[0.3em]">
                     [{index}]
                   </div>
-                  <div className={type === 'string' ? 'text-red-600 dark:text-red-400' : 'text-purple-600 dark:text-purple-400'}>
+                  <div className={type === 'string' ? 'text-accentMagenta text-sm font-mono' : 'text-accentEmerald text-sm font-mono'}>
                     {type === 'string' ? `"${value}"` : value}
                   </div>
                 </div>
@@ -87,7 +87,7 @@ function ArrayGrid({ array }: { array: ArrayState }) {
         </div>
         
         {size > 10 && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <div className="text-[0.7rem] text-muted-foreground/70 mt-3 uppercase tracking-[0.25em]">
             Showing first 10 elements of {size} total
           </div>
         )}
@@ -103,35 +103,46 @@ function ArrayGrid({ array }: { array: ArrayState }) {
     const cols = colEnd - colStart + 1
     
     return (
-      <div className="p-3 rounded-lg border-2 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          {name}({dimensions[0]},{dimensions[1]}) - 2D Array
+      <div className="glass-panel-strong border border-surface-divider/70 rounded-2xl px-4 py-4 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-sm font-semibold text-foreground/90 tracking-wide">{name}</div>
+            <div className="text-xs uppercase tracking-[0.28em] text-muted-foreground/60">2D · {dimensions[0]} × {dimensions[1]}</div>
+          </div>
+          <div className="text-[0.65rem] uppercase tracking-[0.25em] text-accentMagenta/70">
+            Rows {rowStart}-{rowEnd} · Cols {colStart}-{colEnd}
+          </div>
         </div>
         
         <div className="overflow-auto">
-          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(cols, 8)}, 1fr)` }}>
-            {Array.from({ length: Math.min(rows, 8) }, (_, i) => 
+          <div
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(cols, 8)}, minmax(80px, 1fr))` }}
+          >
+            {Array.from({ length: Math.min(rows, 8) }, (_, i) =>
               Array.from({ length: Math.min(cols, 8) }, (_, j) => {
                 const rowIndex = rowStart + i
                 const colIndex = colStart + j
                 const key = `${rowIndex},${colIndex}`
-                const value = values.get(key) ?? (type === 'string' ? '' : 0)
+                const fallbackValue: ScalarValue = type === 'string' ? '' : 0
+                const value = values.get(key) ?? fallbackValue
                 const isAccessed = recentlyAccessed.has(key)
+                const isChanged = array.recentlyChanged?.has(key)
                 
                 return (
                   <div
                     key={key}
-                    className={`array-cell p-1 text-center text-xs font-mono min-h-[40px] flex items-center justify-center rounded-lg border-2 transition-colors duration-300 ${
-                      isAccessed 
-                        ? 'animate-variable-highlight-border' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}
+                    className={cn(
+                      'array-cell h-[74px] flex flex-col items-center justify-center rounded-xl border border-surface-divider/70 bg-[rgba(11,16,27,0.85)] transition-all duration-300 shadow-[0_8px_18px_-14px_rgba(12,20,34,0.85)]',
+                      isAccessed && 'animate-variable-highlight-border border-[rgba(75,192,255,0.65)] shadow-[0_16px_32px_-20px_rgba(75,192,255,0.6)]',
+                      isChanged && 'border-[rgba(201,93,245,0.65)] shadow-[0_16px_32px_-18px_rgba(201,93,245,0.6)]'
+                    )}
                   >
                     <div>
-                      <div className="text-gray-500 dark:text-gray-400 text-[9px]">
+                      <div className="text-muted-foreground/60 text-[0.6rem] uppercase tracking-[0.3em]">
                         [{rowIndex},{colIndex}]
                       </div>
-                      <div className={type === 'string' ? 'text-red-600 dark:text-red-400' : 'text-purple-600 dark:text-purple-400'}>
+                      <div className={type === 'string' ? 'text-accentMagenta text-sm font-mono' : 'text-accentEmerald text-sm font-mono'}>
                         {type === 'string' ? `"${value}"` : value}
                       </div>
                     </div>
@@ -142,7 +153,7 @@ function ArrayGrid({ array }: { array: ArrayState }) {
           </div>
           
           {(rows > 8 || cols > 8) && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <div className="text-[0.7rem] text-muted-foreground/70 mt-3 uppercase tracking-[0.25em]">
               Showing {Math.min(rows, 8)}×{Math.min(cols, 8)} of {rows}×{cols} total
             </div>
           )}

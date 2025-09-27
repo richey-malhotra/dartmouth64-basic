@@ -1,26 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-
-interface Variable {
-  name: string
-  value: any
-  type: 'number' | 'string'
-  changed?: boolean
-}
-
-interface ArrayData {
-  name: string
-  dimensions: number[]
-  values: Map<string, any>
-  recentlyAccessed: Set<string>
-  bounds: [number, number][]
-  type: 'number' | 'string'
-}
+import { useRef } from 'react'
+import type { VariableState, ArrayState } from './types'
 
 interface VariablesArraysPanelProps {
-  variables: Map<string, Variable>
-  arrays: Map<string, ArrayData>
+  variables: Map<string, VariableState>
+  arrays: Map<string, ArrayState>
   currentLine?: number | null
 }
 
@@ -64,7 +49,7 @@ export function VariablesArraysPanel({ variables, arrays, currentLine }: Variabl
               </div>
               
               {/* Table Rows with Hover Effects */}
-              {variableList.map((variable, index) => (
+              {variableList.map((variable) => (
                 <div 
                   key={variable.name} 
                   className={`grid grid-cols-4 gap-3 p-3 text-sm border-b border-[#464647] hover:bg-[#2d2d30]/70 transition-colors ${
@@ -74,7 +59,7 @@ export function VariablesArraysPanel({ variables, arrays, currentLine }: Variabl
                   <div className="text-[#e1e1e1] font-mono font-medium">{variable.name}</div>
                   <div className="text-[#569cd6] font-medium text-xs">{variable.type === 'number' ? 'num' : 'str'}</div>
                   <div className="text-[#b5cea8] font-mono text-xs">
-                    {variable.type === 'string' ? `"${variable.value}"` : variable.value}
+                    {variable.type === 'string' ? <span>&ldquo;{variable.value}&rdquo;</span> : variable.value}
                   </div>
                   <div className="text-[#4ec9b0] font-medium text-xs">
                     {variable.changed ? '✓ changed' : ''}
@@ -129,7 +114,7 @@ export function VariablesArraysPanel({ variables, arrays, currentLine }: Variabl
                   <div className="px-4 py-2 bg-gray-800 dark:bg-gray-700 border-b border-gray-600 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[#e1e1e1] font-medium">
-                        {array.name}: DIM {array.name}({array.bounds.map(([min, max]) => max).join(',')})
+                        {array.name}: DIM {array.name}({array.bounds.map(([, max]) => max).join(',')})
                       </span>
                       <span className="text-gray-400">{array.bounds[0][1]} elements</span>
                     </div>

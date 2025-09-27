@@ -1,11 +1,25 @@
-import { 
-  ProgramNode, LineNode, StatementNode, ExpressionNode,
-  LetNode, PrintNode, InputNode, ForNode, NextNode, IfNode,
-  GotoNode, GosubNode, ReturnNode, DimNode, ReadNode, DataNode,
-  RemNode, EndNode, StopNode, BinaryOpNode, UnaryOpNode,
-  VariableRefNode, ArrayRefNode, NumberNode, StringNode,
+import {
+  ProgramNode,
+  LineNode,
+  StatementNode,
+  ExpressionNode,
+  LetNode,
+  PrintNode,
+  InputNode,
+  ForNode,
+  NextNode,
+  IfNode,
+  GotoNode,
+  GosubNode,
+  DimNode,
+  VariableRefNode,
+  ArrayRefNode,
+  BinaryOpNode,
+  UnaryOpNode,
   FunctionCallNode
 } from '../parser/ast'
+
+type BasicValue = number | string
 
 // Execution state for educational visualization
 export interface ExecutionState {
@@ -27,7 +41,7 @@ export interface ExecutionState {
   // I/O
   consoleOutput: string[]
   dataPointer: number
-  dataValues: (number | string)[]
+  dataValues: BasicValue[]
   
   // Educational features
   recentlyChangedVars: Set<string>
@@ -36,7 +50,7 @@ export interface ExecutionState {
 
 export interface Variable {
   name: string
-  value: any
+  value: BasicValue
   type: 'number' | 'string' 
   lastChanged?: number
 }
@@ -44,7 +58,7 @@ export interface Variable {
 export interface ArrayState {
   name: string
   dimensions: number[]
-  values: Map<string, any>
+  values: Map<string, BasicValue>
   recentlyAccessed: Set<string>
   bounds: [number, number][]
   type: 'number' | 'string'
@@ -233,7 +247,7 @@ export class BasicInterpreter {
         this.state.programCounter++
         break
       default:
-        throw new Error(`Unimplemented statement: ${(statement as any).type}`)
+        throw new Error(`Unimplemented statement: ${(statement as { type: string }).type}`)
     }
   }
 
@@ -280,7 +294,8 @@ export class BasicInterpreter {
   }
 
   private async executeInput(statement: InputNode): Promise<void> {
-    for (const varRef of statement.variables) {
+    const targets = statement.variables as (VariableRefNode | ArrayRefNode)[]
+    for (const varRef of targets) {
       const prompt = `? `
       let input: string
       
@@ -292,13 +307,16 @@ export class BasicInterpreter {
       
       // Parse input based on variable type
       const isString = varRef.name.endsWith('$')
-      const value = isString ? input : parseFloat(input) || 0
-      
+      const value: BasicValue = isString ? input : Number.parseFloat(input) || 0
+
       if (varRef.type === 'ArrayRef') {
-        const indices = []
+        const indices: number[] = []
         for (const indexExpr of varRef.indices) {
           const index = await this.evaluateExpression(indexExpr)
-          indices.push(Math.floor(index as number))
+          if (typeof index !== 'number') {
+            throw new Error('Array index must evaluate to a number')
+          }
+          indices.push(Math.floor(index))
         }
         this.setArrayValue(varRef.name, indices, value)
       } else {
@@ -423,7 +441,7 @@ export class BasicInterpreter {
   }
 
   // Expression evaluation
-  private async evaluateExpression(expr: ExpressionNode): Promise<any> {
+  private async evaluateExpression(expr: ExpressionNode): Promise<BasicValue> {
     switch (expr.type) {
       case 'Number':
         return expr.value
@@ -432,10 +450,13 @@ export class BasicInterpreter {
       case 'Variable':
         return this.getVariable(expr.name)
       case 'ArrayRef':
-        const indices = []
+        const indices: number[] = []
         for (const indexExpr of expr.indices) {
           const index = await this.evaluateExpression(indexExpr)
-          indices.push(Math.floor(index as number))
+          if (typeof index !== 'number') {
+            throw new Error('Array index must be a number')
+          }
+          indices.push(Math.floor(index))
         }
         return this.getArrayValue(expr.name, indices)
       case 'BinaryOp':
@@ -445,12 +466,12 @@ export class BasicInterpreter {
       case 'FunctionCall':
         return this.evaluateFunctionCall(expr)
       default:
-        throw new Error(`Unknown expression type: ${(expr as any).type}`)
+        throw new Error(`Unknown expression type: ${(expr as { type: string }).type}`)
     }
   }
 
   // Synchronous expression evaluation for DIM statements
-  private evaluateExpressionSync(expr: ExpressionNode): any {
+  private evaluateExpressionSync(expr: ExpressionNode): BasicValue {
     switch (expr.type) {
       case 'Number':
         return expr.value
@@ -461,34 +482,51 @@ export class BasicInterpreter {
     }
   }
 
-  private async evaluateBinaryOp(expr: BinaryOpNode): Promise<any> {
+  private async evaluateBinaryOp(expr: BinaryOpNode): Promise<number | string> {
     const left = await this.evaluateExpression(expr.left)
     const right = await this.evaluateExpression(expr.right)
     
     switch (expr.operator) {
-      case '+': return left + right
-      case '-': return left - right
-      case '*': return left * right
-      case '/': return left / right
-      case '^': return Math.pow(left, right)
-      case '=': return left === right ? 1 : 0
-      case '<>': return left !== right ? 1 : 0
-      case '<': return left < right ? 1 : 0
-      case '<=': return left <= right ? 1 : 0
-      case '>': return left > right ? 1 : 0
-      case '>=': return left >= right ? 1 : 0
-      case 'AND': return (this.isTruthy(left) && this.isTruthy(right)) ? 1 : 0
-      case 'OR': return (this.isTruthy(left) || this.isTruthy(right)) ? 1 : 0
+      case '+':
+        if (typeof left === 'string' || typeof right === 'string') {
+          return String(left) + String(right)
+        }
+        return (left as number) + (right as number)
+      case '-':
+        return Number(left) - Number(right)
+      case '*':
+        return Number(left) * Number(right)
+      case '/':
+        return Number(left) / Number(right)
+      case '^':
+        return Math.pow(Number(left), Number(right))
+      case '=':
+        return left === right ? 1 : 0
+      case '<>':
+        return left !== right ? 1 : 0
+      case '<':
+        return Number(left) < Number(right) ? 1 : 0
+      case '<=':
+        return Number(left) <= Number(right) ? 1 : 0
+      case '>':
+        return Number(left) > Number(right) ? 1 : 0
+      case '>=':
+        return Number(left) >= Number(right) ? 1 : 0
+      case 'AND':
+        return this.isTruthy(left) && this.isTruthy(right) ? 1 : 0
+      case 'OR':
+        return this.isTruthy(left) || this.isTruthy(right) ? 1 : 0
       default:
         throw new Error(`Unknown binary operator: ${expr.operator}`)
     }
   }
 
-  private async evaluateUnaryOp(expr: UnaryOpNode): Promise<any> {
+  private async evaluateUnaryOp(expr: UnaryOpNode): Promise<number> {
     const operand = await this.evaluateExpression(expr.operand)
     
     switch (expr.operator) {
-      case '-': return -operand
+      case '-':
+        return -Number(operand)
       case 'NOT': return this.isTruthy(operand) ? 0 : 1
       default:
         throw new Error(`Unknown unary operator: ${expr.operator}`)
@@ -517,7 +555,7 @@ export class BasicInterpreter {
   }
 
   // Variable and array management
-  private setVariable(name: string, value: any): void {
+  private setVariable(name: string, value: BasicValue): void {
     const type = name.endsWith('$') ? 'string' : 'number'
     const variable: Variable = {
       name,
@@ -530,7 +568,7 @@ export class BasicInterpreter {
     this.state.recentlyChangedVars.add(name)
   }
 
-  private getVariable(name: string): any {
+  private getVariable(name: string): BasicValue {
     const variable = this.state.variables.get(name)
     if (!variable) {
       // Uninitialized variables default to 0 or ""
@@ -539,7 +577,7 @@ export class BasicInterpreter {
     return variable.value
   }
 
-  private setArrayValue(name: string, indices: number[], value: any): void {
+  private setArrayValue(name: string, indices: number[], value: BasicValue): void {
     const array = this.state.arrays.get(name)
     if (!array) {
       throw new Error(`Array ${name} not dimensioned`)
@@ -563,7 +601,7 @@ export class BasicInterpreter {
     this.state.recentlyAccessedArrays.get(name)!.add(key)
   }
 
-  private getArrayValue(name: string, indices: number[]): any {
+  private getArrayValue(name: string, indices: number[]): BasicValue {
     const array = this.state.arrays.get(name)
     if (!array) {
       throw new Error(`Array ${name} not dimensioned`)
@@ -581,13 +619,13 @@ export class BasicInterpreter {
   }
 
   // Utility methods
-  private isTruthy(value: any): boolean {
+  private isTruthy(value: BasicValue): boolean {
     if (typeof value === 'number') return value !== 0
     if (typeof value === 'string') return value !== ''
     return Boolean(value)
   }
 
-  private valueToString(value: any): string {
+  private valueToString(value: BasicValue): string {
     if (typeof value === 'string') return value
     if (typeof value === 'number') {
       if (Number.isInteger(value)) return value.toString()

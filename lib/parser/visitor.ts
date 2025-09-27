@@ -1,16 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BasicParser } from './parser'
 import { BasicLexer } from './lexer'
-import { 
+import {
   ProgramNode, LineNode, StatementNode, ExpressionNode,
   LetNode, PrintNode, InputNode, ForNode, NextNode, IfNode,
   GotoNode, GosubNode, ReturnNode, DimNode, ReadNode, DataNode,
-  RemNode, EndNode, StopNode, BinaryOpNode, UnaryOpNode,
-  VariableRefNode, ArrayRefNode, NumberNode, StringNode,
+  RemNode, EndNode, StopNode, VariableRefNode, ArrayRefNode,
   FunctionCallNode, PrintItemNode, ArrayDeclNode
 } from './ast'
 
+const BaseVisitorConstructor = (BasicParser as unknown as {
+  getBaseCstVisitorConstructor: () => new (...args: unknown[]) => {
+    validateVisitor: () => void
+    visit: (ctx: any) => any
+  }
+}).getBaseCstVisitorConstructor()
+
 // CST to AST visitor for Dartmouth 64 BASIC
-export class BasicInterpreterVisitor extends BasicParser.getBaseCstVisitorConstructor() {
+export class BasicInterpreterVisitor extends BaseVisitorConstructor {
   
   constructor() {
     super()
@@ -187,7 +194,7 @@ export class BasicInterpreterVisitor extends BasicParser.getBaseCstVisitorConstr
     }
   }
 
-  returnStatement(ctx: any): ReturnNode {
+  returnStatement(): ReturnNode {
     return {
       type: 'Return'
     }
@@ -266,13 +273,13 @@ export class BasicInterpreterVisitor extends BasicParser.getBaseCstVisitorConstr
     }
   }
 
-  endStatement(ctx: any): EndNode {
+  endStatement(): EndNode {
     return {
       type: 'End'
     }
   }
 
-  stopStatement(ctx: any): StopNode {
+  stopStatement(): StopNode {
     return {
       type: 'Stop'
     }

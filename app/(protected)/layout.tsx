@@ -1,18 +1,15 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '../../components/ui/button'
 import { 
   Code2, 
   FolderOpen, 
   BookOpen, 
   Settings, 
   HelpCircle, 
-  LogOut,
-  Plus,
-  Minus
+  LogOut
 } from 'lucide-react'
 
 const navigation = [
@@ -29,15 +26,7 @@ export default function ProtectedLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [fontSize, setFontSize] = useState(16);
   const [status, setStatus] = useState('READY');
-
-  useEffect(() => {
-    document.documentElement.style.setProperty('--monaco-font-size', `${fontSize}px`);
-  }, [fontSize]);
-
-  const increaseFontSize = () => setFontSize(size => Math.min(size + 1, 24));
-  const decreaseFontSize = () => setFontSize(size => Math.max(size - 1, 10));
 
   return (
     <div className="h-screen flex bg-background">

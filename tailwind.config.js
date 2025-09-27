@@ -52,23 +52,41 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
         action: {
-          DEFAULT: "hsl(var(--action))",
-          foreground: "hsl(var(--action-foreground))",
+          DEFAULT: "hsl(var(--accent-cyan))",
+          foreground: "hsl(var(--accent-cyan-foreground))",
         },
-        // Educational theme colors
+        accentCyan: {
+          DEFAULT: "hsl(var(--accent-cyan))",
+          foreground: "hsl(var(--accent-cyan-foreground))",
+        },
+        accentMagenta: {
+          DEFAULT: "hsl(var(--accent-magenta))",
+          foreground: "hsl(var(--accent-magenta-foreground))",
+        },
+        accentEmerald: {
+          DEFAULT: "hsl(var(--accent-emerald))",
+          foreground: "hsl(var(--accent-emerald-foreground))",
+        },
+        accentAmber: {
+          DEFAULT: "hsl(var(--accent-amber))",
+          foreground: "hsl(var(--accent-amber-foreground))",
+        },
+        surface: {
+          divider: "var(--surface-divider)",
+        },
         variable: {
-          DEFAULT: "hsl(142, 76%, 36%)",
-          highlight: "hsl(142, 76%, 90%)",
+          DEFAULT: "hsl(var(--accent-cyan))",
+          highlight: "hsl(var(--variable-highlight))",
           "highlight-border": "hsl(var(--variable-highlight-border))",
         },
         array: {
-          DEFAULT: "hsl(43, 74%, 49%)",
-          highlight: "hsl(43, 74%, 90%)",
-          border: "hsl(43, 74%, 60%)",
+          DEFAULT: "hsl(var(--accent-magenta))",
+          highlight: "hsla(282, 82%, 62%, 0.12)",
+          border: "hsl(var(--accent-magenta))",
         },
         console: {
-          DEFAULT: "hsl(220, 13%, 18%)",
-          text: "hsl(220, 14%, 71%)",
+          DEFAULT: "#12141C",
+          text: "hsl(220, 15%, 74%)",
         }
       },
       borderRadius: {

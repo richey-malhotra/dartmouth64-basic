@@ -1,8 +1,8 @@
-import { CstParser, IToken } from 'chevrotain'
+import { CstParser } from 'chevrotain'
 import {
   allTokens,
   Let, Print, Input, For, To, Step, Next, If, Then, Goto, Gosub, Return,
-  Dim, Read, Data, Restore, Rem, End, Stop,
+  Dim, Read, Data, Rem, End, Stop,
   Plus, Minus, Multiply, Divide, Power,
   Equal, NotEqual, LessThan, LessEqual, GreaterThan, GreaterEqual,
   And, Or, Not,

@@ -13,7 +13,7 @@ interface MonacoBasicEditorProps {
 }
 
 // Language configuration for BASIC
-const basicLanguageConfiguration = {
+const basicLanguageConfiguration: monaco.languages.LanguageConfiguration = {
   comments: {
     lineComment: 'REM',
   },
@@ -31,7 +31,7 @@ const basicLanguageConfiguration = {
 }
 
 // Dartmouth 64 BASIC Language Definition for Monaco Monarch
-const basicLanguageDefinition = {
+const basicLanguageDefinition: monaco.languages.IMonarchLanguage = {
   // Set defaultToken to invalid to see what we do not tokenize yet
   defaultToken: 'invalid',
   
@@ -93,28 +93,37 @@ const basicLanguageDefinition = {
 }
 
 // Theme for BASIC syntax highlighting (VS Code Dark)
-const basicTheme = {
-  base: 'vs-dark' as const,
+const basicTheme: monaco.editor.IStandaloneThemeData = {
+  base: 'vs-dark',
   inherit: true,
   rules: [
-    { token: 'line-number', foreground: '569cd6', fontStyle: 'bold' },
-    { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' },
-    { token: 'function', foreground: 'dcdcaa', fontStyle: 'bold' },
-    { token: 'operator', foreground: 'd4d4d4' },
-    { token: 'variable', foreground: '9cdcfe' },
-    { token: 'array', foreground: '4ec9b0', fontStyle: 'bold' },
-    { token: 'number', foreground: 'b5cea8' },
-    { token: 'number.float', foreground: 'b5cea8' },
-    { token: 'string', foreground: 'ce9178' },
-    { token: 'comment', foreground: '6a9955', fontStyle: 'italic' },
+    { token: 'line-number', foreground: '7f8ea3', fontStyle: 'bold' },
+    { token: 'keyword', foreground: '4bc0ff', fontStyle: 'bold' },
+    { token: 'function', foreground: 'c95df5', fontStyle: 'bold' },
+    { token: 'operator', foreground: '9aa1b5' },
+    { token: 'variable', foreground: 'd7f5ff' },
+    { token: 'array', foreground: '5be3b8', fontStyle: 'bold' },
+    { token: 'number', foreground: 'ffd37d' },
+    { token: 'number.float', foreground: 'ffd37d' },
+    { token: 'string', foreground: 'ffb4e2' },
+    { token: 'comment', foreground: '627094', fontStyle: 'italic' },
   ],
   colors: {
-    'editor.background': '#1e1e1e',
-    'editor.foreground': '#d4d4d4',
-    'editor.lineHighlightBackground': '#2a2d2e',
-    'editorLineNumber.foreground': '#858585',
-    'editor.selectionBackground': '#264f78',
-    'editor.selectionHighlightBackground': '#add6ff26',
+    'editor.background': '#0f1526',
+    'editor.foreground': '#dde3f7',
+    'editor.lineHighlightBackground': '#16314388',
+    'editorLineNumber.foreground': '#4d566c',
+    'editorCursor.foreground': '#4bc0ff',
+    'editor.selectionBackground': '#1e406355',
+    'editor.inactiveSelectionBackground': '#1e2f4635',
+    'editor.selectionHighlightBackground': '#305a7f55',
+    'editorSuggestWidget.background': '#12192cdd',
+    'editorSuggestWidget.border': '#1d2641',
+    'editorWidget.background': '#12182aee',
+    'editorHoverWidget.background': '#12182add',
+    'editorLineNumber.activeForeground': '#9fb8ff',
+    'editorIndentGuide.background': '#1b2235',
+    'editorIndentGuide.activeBackground': '#28324d',
   },
 }
 
@@ -133,16 +142,10 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
       monaco.languages.register({ id: languageId })
       
       // Set the Monarch tokenizer with the complete language definition
-      monaco.languages.setMonarchTokensProvider(
-        languageId,
-        basicLanguageDefinition as any
-      )
+      monaco.languages.setMonarchTokensProvider(languageId, basicLanguageDefinition)
       
       // Set language configuration
-      monaco.languages.setLanguageConfiguration(
-        languageId,
-        basicLanguageConfiguration as any
-      )
+      monaco.languages.setLanguageConfiguration(languageId, basicLanguageConfiguration)
       
       // Define custom theme
       monaco.editor.defineTheme('basic-theme', basicTheme)
@@ -159,7 +162,7 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
           };
           const suggestions = [
             // Keywords
-            ...basicLanguageDefinition.keywords.map(keyword => ({
+            ...(basicLanguageDefinition.keywords ?? []).map((keyword: string) => ({
               label: keyword,
               kind: monaco.languages.CompletionItemKind.Keyword,
               insertText: keyword,
@@ -167,7 +170,7 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
               range: range,
             })),
             // Functions
-            ...basicLanguageDefinition.functions.map(func => ({
+            ...(basicLanguageDefinition.functions ?? []).map((func: string) => ({
               label: func,
               kind: monaco.languages.CompletionItemKind.Function,
               insertText: `${func}()`,
@@ -214,6 +217,8 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
       overviewRulerBorder: false,
       hideCursorInOverviewRuler: true,
       overviewRulerLanes: 0,
+      smoothScrolling: true,
+      cursorSmoothCaretAnimation: 'on',
     })
 
     // Track cursor position changes
@@ -240,7 +245,7 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
         .map(d => d.id)
       
       // Add new decoration for current line
-      const newDecorations = editor.deltaDecorations(decorationIds, [
+      editor.deltaDecorations(decorationIds, [
         {
           range: new monaco.Range(currentLine, 1, currentLine, 1),
           options: {
@@ -305,12 +310,12 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
       {/* CSS for execution highlighting */}
       <style jsx global>{`
         .current-line-execution {
-          background-color: rgba(255, 235, 59, 0.3) !important;
-          border-left: 3px solid #ffc107 !important;
+          background: linear-gradient(90deg, rgba(75, 192, 255, 0.12), rgba(201, 93, 245, 0.05)) !important;
+          border-left: 3px solid rgba(75, 192, 255, 0.75) !important;
         }
         
         .current-line-execution-margin {
-          background-color: #ffc107 !important;
+          background: linear-gradient(180deg, rgba(75, 192, 255, 0.85), rgba(201, 93, 245, 0.65)) !important;
           width: 4px !important;
         }
       `}</style>
