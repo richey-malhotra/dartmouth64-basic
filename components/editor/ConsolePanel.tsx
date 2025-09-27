@@ -4,38 +4,56 @@ import { useEffect, useRef, useState } from 'react'
 
 interface ConsolePanelProps {
   output: string[]
+  isActive: boolean
 }
 
-export function ConsolePanel({ output }: ConsolePanelProps) {
+export function ConsolePanel({ output, isActive }: ConsolePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [latestLineIndex, setLatestLineIndex] = useState<number | null>(null);
   const prevOutputLength = useRef(output.length);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-scroll to bottom and handle new line animation
+  const triggerHighlight = () => {
+    if (output.length > 0) {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      const newLineIndex = output.length - 1;
+      setLatestLineIndex(newLineIndex);
+      
+      animationTimeoutRef.current = setTimeout(() => {
+        setLatestLineIndex(null);
+        animationTimeoutRef.current = null;
+      }, 800); // Must match the animation duration
+    }
+  };
+
+  // Effect for new lines
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
 
-    // Check if a new line has been added
     if (output.length > prevOutputLength.current) {
-      const newLineIndex = output.length - 1;
-      setLatestLineIndex(newLineIndex);
-      
-      // Reset the animation state after it has played
-      const timer = setTimeout(() => {
-        setLatestLineIndex(null);
-      }, 800); // Must match the animation duration in tailwind.config.js
-
-      // Update the previous length for the next render
-      prevOutputLength.current = output.length;
-
-      return () => clearTimeout(timer);
-    } else if (output.length < prevOutputLength.current) {
-      // Handle case where console is cleared
-      prevOutputLength.current = output.length;
+      if (isActive) {
+        triggerHighlight();
+      }
     }
-  }, [output]);
+    prevOutputLength.current = output.length;
+  }, [output, isActive]);
+
+  // Effect for tab visibility
+  useEffect(() => {
+    if (isActive) {
+      triggerHighlight();
+    }
+    // Cleanup timeout on component unmount or when isActive changes
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, [isActive]);
 
   return (
     <div className="h-full flex flex-col">

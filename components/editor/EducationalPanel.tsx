@@ -67,7 +67,7 @@ export function EducationalPanel({
             <ArrayVisualization arrays={arrays} />
           )}
           {activeTab === 'console' && (
-            <ConsolePanel output={consoleOutput} />
+            <ConsolePanel output={consoleOutput} isActive={activeTab === 'console'} />
           )}
         </div>
       </div>
