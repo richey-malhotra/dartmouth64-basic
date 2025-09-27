@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface ConsolePanelProps {
   output: string[]
@@ -8,54 +8,67 @@ interface ConsolePanelProps {
 
 export function ConsolePanel({ output }: ConsolePanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [latestLineIndex, setLatestLineIndex] = useState<number | null>(null);
+  const prevOutputLength = useRef(output.length);
 
-  // Auto-scroll to bottom when new output is added
+  // Auto-scroll to bottom and handle new line animation
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [output])
+
+    // Check if a new line has been added
+    if (output.length > prevOutputLength.current) {
+      const newLineIndex = output.length - 1;
+      setLatestLineIndex(newLineIndex);
+      
+      // Reset the animation state after it has played
+      const timer = setTimeout(() => {
+        setLatestLineIndex(null);
+      }, 800); // Must match the animation duration in tailwind.config.js
+
+      // Update the previous length for the next render
+      prevOutputLength.current = output.length;
+
+      return () => clearTimeout(timer);
+    } else if (output.length < prevOutputLength.current) {
+      // Handle case where console is cleared
+      prevOutputLength.current = output.length;
+    }
+  }, [output]);
 
   return (
-    <div className="h-full flex flex-col bg-console text-console-text">
-      {/* Console Header */}
-      <div className="px-4 py-2 bg-gray-800 dark:bg-gray-700 border-b border-gray-600 dark:border-gray-600 text-xs">
-        <div className="flex items-center justify-between">
-          <span className="font-mono">DARTMOUTH BASIC CONSOLE</span>
-          <span className="text-gray-400">OUTPUT</span>
-        </div>
-      </div>
-
+    <div className="h-full flex flex-col">
       {/* Console Output */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-auto p-4 font-mono text-sm leading-relaxed"
+        className="flex-1 overflow-auto p-4"
       >
         {output.length === 0 ? (
-          <div className="text-gray-500 dark:text-gray-400 italic">
-            Console output will appear here when you run your program...
+          <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="text-center">
+              <div className="text-2xl mb-2">🖥️</div>
+              <div className="text-sm">No console output yet</div>
+              <div className="text-xs mt-1">Use PRINT to display text</div>
+            </div>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-2">
             {output.map((line, index) => (
               <div 
                 key={index}
-                className="whitespace-pre-wrap"
+                className={`p-3 rounded-lg border-2 transition-colors duration-300 font-mono text-sm ${
+                  index === latestLineIndex
+                    ? 'animate-variable-highlight-border'
+                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                }`}
                 style={{ wordBreak: 'break-word' }}
               >
-                {line}
+                <span className="text-gray-700 dark:text-gray-300">{line}</span>
               </div>
             ))}
           </div>
         )}
-      </div>
-
-      {/* Console Footer with Stats */}
-      <div className="px-4 py-2 bg-gray-700 dark:bg-gray-600 border-t border-gray-600 text-xs text-gray-300">
-        <div className="flex items-center justify-between">
-          <span>{output.length} lines of output</span>
-          <span className="text-gray-400">OUTPUT</span>
-        </div>
       </div>
     </div>
   )

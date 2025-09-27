@@ -9,6 +9,7 @@ interface MonacoBasicEditorProps {
   onChange: (value: string) => void
   currentLine?: number | null
   onCursorPositionChange?: (position: { line: number; column: number }) => void
+  fontSize?: number
 }
 
 // Language configuration for BASIC
@@ -117,7 +118,7 @@ const basicTheme = {
   },
 }
 
-export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositionChange }: MonacoBasicEditorProps) {
+export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositionChange, fontSize }: MonacoBasicEditorProps) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Monaco | null>(null)
   const languageId = 'dartmouth-basic'
@@ -149,13 +150,21 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
       // Register completion item provider for BASIC intellisense
       monaco.languages.registerCompletionItemProvider(languageId, {
         provideCompletionItems: (model, position) => {
+          const word = model.getWordUntilPosition(position);
+          const range = {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn,
+          };
           const suggestions = [
             // Keywords
             ...basicLanguageDefinition.keywords.map(keyword => ({
               label: keyword,
               kind: monaco.languages.CompletionItemKind.Keyword,
               insertText: keyword,
-              documentation: `BASIC keyword: ${keyword}`
+              documentation: `BASIC keyword: ${keyword}`,
+              range: range,
             })),
             // Functions
             ...basicLanguageDefinition.functions.map(func => ({
@@ -163,7 +172,8 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
               kind: monaco.languages.CompletionItemKind.Function,
               insertText: `${func}()`,
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              documentation: `BASIC function: ${func}`
+              documentation: `BASIC function: ${func}`,
+              range: range,
             })),
             // Common BASIC snippets
             {
@@ -171,14 +181,16 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
               kind: monaco.languages.CompletionItemKind.Snippet,
               insertText: 'FOR ${1:I} = ${2:1} TO ${3:10}\n\t${4:PRINT I}\nNEXT ${1:I}',
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              documentation: 'FOR-NEXT loop structure'
+              documentation: 'FOR-NEXT loop structure',
+              range: range,
             },
             {
               label: 'IF-THEN',
               kind: monaco.languages.CompletionItemKind.Snippet,
               insertText: 'IF ${1:condition} THEN ${2:statement}',
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              documentation: 'IF-THEN conditional statement'
+              documentation: 'IF-THEN conditional statement',
+              range: range,
             }
           ]
           
@@ -243,6 +255,20 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
       editor.revealLineInCenterIfOutsideViewport(currentLine)
     }
   }, [currentLine])
+
+  useEffect(() => {
+    if (editorRef.current) {
+      const newFontSize = fontSize || 14; // Default to 14 if undefined
+      editorRef.current.updateOptions({
+        fontSize: newFontSize,
+        lineHeight: newFontSize * 1.5,
+        padding: {
+          top: newFontSize / 2,
+          bottom: newFontSize / 2,
+        },
+      });
+    }
+  }, [fontSize]);
 
   return (
     <div className="h-full">

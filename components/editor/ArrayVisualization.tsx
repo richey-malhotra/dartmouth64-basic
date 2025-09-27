@@ -17,15 +17,7 @@ interface ArrayVisualizationProps {
 }
 
 export function ArrayVisualization({ arrays, currentLine }: ArrayVisualizationProps) {
-  const [selectedArray, setSelectedArray] = useState<string | null>(null)
   const arrayEntries = Array.from(arrays.entries())
-
-  // Auto-select first array
-  useEffect(() => {
-    if (arrayEntries.length > 0 && !selectedArray) {
-      setSelectedArray(arrayEntries[0][0])
-    }
-  }, [arrayEntries, selectedArray])
 
   if (arrayEntries.length === 0) {
     return (
@@ -39,36 +31,13 @@ export function ArrayVisualization({ arrays, currentLine }: ArrayVisualizationPr
     )
   }
 
-  const currentArray = selectedArray ? arrays.get(selectedArray) : null
-
   return (
     <div className="h-full flex flex-col">
-      {/* Array Selector */}
-      {arrayEntries.length > 1 && (
-        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-          <select
-            value={selectedArray || ''}
-            onChange={(e) => setSelectedArray(e.target.value)}
-            className="w-full px-3 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
-          >
-            {arrayEntries.map(([name]) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {/* Array Visualization */}
-      <div className="flex-1 overflow-auto p-4">
-        {currentArray ? (
-          <ArrayGrid array={currentArray} />
-        ) : (
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            Select an array to visualize
-          </div>
-        )}
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {arrayEntries.map(([name, array]) => (
+          <ArrayGrid key={name} array={array} />
+        ))}
       </div>
     </div>
   )
@@ -83,8 +52,8 @@ function ArrayGrid({ array }: { array: ArrayState }) {
     const size = end - start + 1
     
     return (
-      <div className="space-y-4">
-        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <div className="p-3 rounded-lg border-2 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {name}({dimensions[0]}) - 1D Array
         </div>
         
@@ -92,14 +61,16 @@ function ArrayGrid({ array }: { array: ArrayState }) {
           {Array.from({ length: size }, (_, i) => {
             const index = start + i
             const key = `${index}`
-            const value = values.get(key) ?? 0
+            const value = values.get(key) ?? (type === 'string' ? '' : 0)
             const isAccessed = recentlyAccessed.has(key)
             
             return (
               <div
                 key={index}
-                className={`array-cell p-2 text-center text-xs font-mono min-h-[32px] flex items-center justify-center ${
-                  isAccessed ? 'accessed' : ''
+                className={`array-cell p-2 text-center text-xs font-mono min-h-[40px] flex items-center justify-center rounded-lg border-2 transition-colors duration-300 ${
+                  isAccessed 
+                    ? 'animate-variable-highlight-border' 
+                    : 'border-gray-300 dark:border-gray-600'
                 }`}
               >
                 <div>
@@ -116,7 +87,7 @@ function ArrayGrid({ array }: { array: ArrayState }) {
         </div>
         
         {size > 10 && (
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Showing first 10 elements of {size} total
           </div>
         )}
@@ -132,8 +103,8 @@ function ArrayGrid({ array }: { array: ArrayState }) {
     const cols = colEnd - colStart + 1
     
     return (
-      <div className="space-y-4">
-        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <div className="p-3 rounded-lg border-2 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {name}({dimensions[0]},{dimensions[1]}) - 2D Array
         </div>
         
@@ -144,14 +115,16 @@ function ArrayGrid({ array }: { array: ArrayState }) {
                 const rowIndex = rowStart + i
                 const colIndex = colStart + j
                 const key = `${rowIndex},${colIndex}`
-                const value = values.get(key) ?? 0
+                const value = values.get(key) ?? (type === 'string' ? '' : 0)
                 const isAccessed = recentlyAccessed.has(key)
                 
                 return (
                   <div
                     key={key}
-                    className={`array-cell p-1 text-center text-xs font-mono min-h-[40px] flex items-center justify-center ${
-                      isAccessed ? 'accessed' : ''
+                    className={`array-cell p-1 text-center text-xs font-mono min-h-[40px] flex items-center justify-center rounded-lg border-2 transition-colors duration-300 ${
+                      isAccessed 
+                        ? 'animate-variable-highlight-border' 
+                        : 'border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     <div>

@@ -6,7 +6,7 @@ module.exports = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-  ],
+	],
   prefix: "",
   theme: {
     container: {
@@ -51,10 +51,15 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        action: {
+          DEFAULT: "hsl(var(--action))",
+          foreground: "hsl(var(--action-foreground))",
+        },
         // Educational theme colors
         variable: {
           DEFAULT: "hsl(142, 76%, 36%)",
           highlight: "hsl(142, 76%, 90%)",
+          "highlight-border": "hsl(var(--variable-highlight-border))",
         },
         array: {
           DEFAULT: "hsl(43, 74%, 49%)",
@@ -84,11 +89,16 @@ module.exports = {
           "0%": { backgroundColor: "hsl(var(--variable-highlight))" },
           "100%": { backgroundColor: "transparent" },
         },
+        "variable-highlight-border-anim": {
+          "0%, 100%": { "border-color": "hsl(var(--border))" },
+          "50%": { "border-color": "hsl(var(--variable-highlight-border))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "variable-highlight": "variable-highlight 0.5s ease-out",
+        "variable-highlight-border": "variable-highlight-border-anim 0.8s ease-out",
       },
     },
   },

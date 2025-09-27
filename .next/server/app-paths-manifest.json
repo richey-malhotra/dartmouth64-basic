@@ -1,5 +1,3 @@
 {
-  "/(protected)/files/page": "app/(protected)/files/page.js",
-  "/(protected)/editor/page": "app/(protected)/editor/page.js",
-  "/(protected)/settings/page": "app/(protected)/settings/page.js"
+  "/(protected)/editor/page": "app/(protected)/editor/page.js"
 }

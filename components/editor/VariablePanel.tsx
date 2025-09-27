@@ -56,22 +56,22 @@ export function VariablePanel({ variables, currentLine }: VariablePanelProps) {
         {variableArray.map(([name, variable]) => (
           <div
             key={name}
-            className={`p-3 rounded-lg border transition-all duration-500 ${
-              highlightedVars.has(name)
-                ? 'bg-variable-highlight border-variable animate-variable-highlight'
-                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-            }`}
+            className="p-3 rounded-lg border-2 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-mono font-semibold text-variable">
+                <span className="font-mono font-semibold text-gray-700 dark:text-gray-300">
                   {name}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded">
                   {variable.type}
                 </span>
               </div>
-              <div className="font-mono text-sm">
+              <div
+                className={`font-mono text-sm p-1 rounded-lg border-2 border-transparent ${
+                  highlightedVars.has(name) ? 'animate-variable-highlight-border' : ''
+                }`}
+              >
                 {variable.type === 'string' ? (
                   <span className="text-red-600 dark:text-red-400">
                     "{variable.value}"
@@ -85,17 +85,6 @@ export function VariablePanel({ variables, currentLine }: VariablePanelProps) {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Variable Statistics */}
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <div>Total Variables: {variableArray.length}</div>
-          <div>
-            Numbers: {variableArray.filter(([, v]) => v.type === 'number').length} | 
-            Strings: {variableArray.filter(([, v]) => v.type === 'string').length}
-          </div>
-        </div>
       </div>
     </div>
   )

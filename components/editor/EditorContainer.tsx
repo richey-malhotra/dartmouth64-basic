@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { MonacoBasicEditor } from './MonacoBasicEditor'
 import { ControlPanel } from './ControlPanel'
-import { VariablesArraysPanel } from './VariablesArraysPanel'
-import { ConsoleOutputPanel } from './ConsoleOutputPanel'
-import { InputDialog } from './InputDialog'
+import { EducationalPanel } from './EducationalPanel'
 import { AISummaryBar } from './AISummaryBar'
+import { StatusBar } from './StatusBar'
+
 // Temporary type definitions until parser is fully integrated
 interface ExecutionState {
   currentLine: number | null
@@ -16,23 +16,39 @@ interface ExecutionState {
   consoleOutput: string[]
 }
 
-export function EditorContainer() {
-  const [code, setCode] = useState(`10 PRINT "HELLO, WORLD!"
-20 LET A = 5
-30 LET B = 10
-40 LET C = A + B
-50 PRINT "A = "; A
-60 PRINT "B = "; B  
-70 PRINT "C = "; C
-80 DIM X(5)
-90 FOR I = 1 TO 5
-100 LET X(I) = I * 2
-110 PRINT "X("; I; ") = "; X(I)
-120 NEXT I
-130 END`)
+export function EditorContainer({
+  setStatus,
+  status,
+  version,
+  user,
+}: {
+  setStatus?: (status: string) => void
+  status?: 'READY' | 'RUNNING'
+  version?: string
+  user?: string
+}) {
+  const [fontSize, setFontSize] = useState(16)
+  const increaseFontSize = () => setFontSize(size => Math.min(size + 1, 24))
+  const decreaseFontSize = () => setFontSize(size => Math.max(size - 1, 10))
+
+  const [code, setCode] = useState(`10 PRINT "WHAT IS YOUR NAME?"
+20 INPUT N$
+30 PRINT "HELLO, "; N$
+40 PRINT "HOW OLD ARE YOU?"
+50 INPUT AGE
+60 IF AGE < 18 THEN PRINT "YOU ARE A MINOR."
+70 IF AGE >= 18 THEN PRINT "YOU ARE AN ADULT."
+80 END`)
 
   const [isRunning, setIsRunning] = useState(false)
   const [currentLine, setCurrentLine] = useState<number | null>(null)
+  
+  useEffect(() => {
+    if (setStatus) {
+      setStatus(isRunning ? 'RUNNING' : 'READY');
+    }
+  }, [isRunning, setStatus]);
+  
   const [variables, setVariables] = useState(() => {
     // Demo variables for UI testing - lots to test scrolling
     const vars = new Map()
@@ -77,6 +93,7 @@ export function EditorContainer() {
         ['1', 2], ['2', 4], ['3', 6], ['4', 8], ['5', 10]
       ]),
       recentlyAccessed: new Set(['3']),
+      recentlyChanged: new Set(['3']),
       bounds: [[1, 5]],
       type: 'number'
     }
@@ -92,6 +109,7 @@ export function EditorContainer() {
         ['11', 55], ['12', 60], ['13', 65], ['14', 70], ['15', 75]
       ]),
       recentlyAccessed: new Set(['7', '8']),
+      recentlyChanged: new Set(['7', '8']),
       bounds: [[1, 15]],
       type: 'number'
     }
@@ -106,6 +124,7 @@ export function EditorContainer() {
         ['5', 'ELDERBERRY'], ['6', 'FIG'], ['7', 'GRAPE'], ['8', 'KIWI']
       ]),
       recentlyAccessed: new Set(['2', '5']),
+      recentlyChanged: new Set(['2', '5']),
       bounds: [[1, 8]],
       type: 'string'
     }
@@ -123,6 +142,7 @@ export function EditorContainer() {
         ['21', 83], ['22', 88], ['23', 92], ['24', 80], ['25', 97]
       ]),
       recentlyAccessed: new Set(['12', '13', '14']),
+      recentlyChanged: new Set(['12', '13', '14']),
       bounds: [[1, 25]],
       type: 'number'
     }
@@ -140,11 +160,9 @@ export function EditorContainer() {
     'X(3) = 6'
   ])
   const [speed, setSpeed] = useState(1000)
-  const [inputDialog, setInputDialog] = useState<{
-    isOpen: boolean
-    prompt: string
-    resolve?: (value: string) => void
-  }>({ isOpen: false, prompt: '' })
+  const [isAwaitingInput, setIsAwaitingInput] = useState(false)
+  const [inputPrompt, setInputPrompt] = useState('')
+  const inputPromiseResolveRef = useRef<((value: string) => void) | null>(null)
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 })
   
   const interpreterRef = useRef<any>(null)
@@ -160,28 +178,21 @@ export function EditorContainer() {
 
   // Handle input requests (for INPUT statements)
   const handleInputRequest = useCallback(async (prompt: string): Promise<string> => {
+    setInputPrompt(prompt)
+    setIsAwaitingInput(true)
     return new Promise((resolve) => {
-      setInputDialog({
-        isOpen: true,
-        prompt,
-        resolve
-      })
+      inputPromiseResolveRef.current = resolve
     })
   }, [])
 
   const handleInputSubmit = useCallback((value: string) => {
-    if (inputDialog.resolve) {
-      inputDialog.resolve(value)
+    if (inputPromiseResolveRef.current) {
+      inputPromiseResolveRef.current(value)
     }
-    setInputDialog({ isOpen: false, prompt: '' })
-  }, [inputDialog])
-
-  const handleInputCancel = useCallback(() => {
-    if (inputDialog.resolve) {
-      inputDialog.resolve('')
-    }
-    setInputDialog({ isOpen: false, prompt: '' })
-  }, [inputDialog])
+    setIsAwaitingInput(false)
+    setInputPrompt('')
+    inputPromiseResolveRef.current = null
+  }, [])
 
   // Create and configure interpreter with dynamic imports
   const createInterpreter = useCallback(async () => {
@@ -203,14 +214,54 @@ export function EditorContainer() {
     if (!interpreter) {
       // Demo execution for now
       setIsRunning(true)
+      setConsoleOutput([])
       setCurrentLine(10)
-      setTimeout(() => {
+      setConsoleOutput(prev => [...prev, 'WHAT IS YOUR NAME?'])
+      
+      // Simulate asking for input
+      setTimeout(async () => {
         setCurrentLine(20)
+        const name = await handleInputRequest('?')
+        setConsoleOutput(prev => [...prev, `> ${name}`])
+        // Update variables
+        setVariables(prev => new Map(prev).set('N$', { name: 'N$', value: name, type: 'string', changed: true }))
+
+        setTimeout(async () => {
+          setCurrentLine(30)
+          setConsoleOutput(prev => [...prev, `HELLO, ${name}`])
+
+          setTimeout(async () => {
+            setCurrentLine(40)
+            setConsoleOutput(prev => [...prev, 'HOW OLD ARE YOU?'])
+            
+            setTimeout(async () => {
+              setCurrentLine(50)
+              const age = await handleInputRequest('?')
+              setConsoleOutput(prev => [...prev, `> ${age}`])
+              setVariables(prev => new Map(prev).set('AGE', { name: 'AGE', value: Number(age), type: 'number', changed: true }))
+
+              setTimeout(() => {
+                const ageNum = Number(age)
+                if (ageNum < 18) {
+                  setCurrentLine(60)
+                  setConsoleOutput(prev => [...prev, 'YOU ARE A MINOR.'])
+                } else {
+                  setCurrentLine(70)
+                  setConsoleOutput(prev => [...prev, 'YOU ARE AN ADULT.'])
+                }
+
+                setTimeout(() => {
+                  setCurrentLine(80)
+                  setTimeout(() => {
+                    setCurrentLine(null)
+                    setIsRunning(false)
+                  }, 500)
+                }, 1000)
+              }, 1000)
+            }, 1000)
+          }, 1000)
+        }, 500)
       }, 1000)
-      setTimeout(() => {
-        setCurrentLine(null)
-        setIsRunning(false)
-      }, 3000)
       return
     }
     
@@ -224,12 +275,12 @@ export function EditorContainer() {
       console.error('Runtime error:', error)
       setConsoleOutput(prev => [...prev, `ERROR: ${error}`])
     }
-  }, [createInterpreter])
+  }, [createInterpreter, handleInputRequest])
 
   const handleStep = useCallback(async () => {
     if (!interpreterRef.current) {
       // Demo step execution for now
-      const lines = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]
+      const lines = [10, 20, 30, 40, 50, 60, 70, 80]
       const current = currentLine
       const currentIndex = current ? lines.indexOf(current) : -1
       const nextLine = currentIndex >= 0 && currentIndex < lines.length - 1 
@@ -256,114 +307,102 @@ export function EditorContainer() {
     interpreterRef.current = null
   }, [])
 
-  const handleSpeedChange = useCallback((newSpeed: number) => {
-    setSpeed(newSpeed)
-    if (interpreterRef.current) {
-      interpreterRef.current.setSpeed(newSpeed)
-    }
-  }, [])
-
   return (
-    <div className="h-full flex bg-[#1e1e1e]">
-      {/* Main Editor Area - 60% width */}
-      <div className="w-[60%] flex flex-col min-w-0">
-        {/* Control Panel */}
-        <ControlPanel 
-          isRunning={isRunning}
-          onRun={handleRun}
-          onStop={handleStop}
-          onStep={handleStep}
-          onReset={() => {
-            setCurrentLine(null)
-            setIsRunning(false)
-            setConsoleOutput(['READY'])
-          }}
-          onNew={() => {
-            setCode('')
-            setCurrentLine(null)
-            setIsRunning(false)
-            setConsoleOutput(['READY'])
-          }}
-          onSave={() => {
-            // TODO: Implement save functionality
-            console.log('Save program')
-          }}
-          onLoad={() => {
-            // TODO: Implement load functionality
-            console.log('Load program')
-          }}
-          onList={() => {
-            // TODO: Implement list functionality
-            setConsoleOutput(prev => [...prev, ...code.split('\n')])
-          }}
-          onRenumber={() => {
-            // TODO: Implement renumber functionality
-            console.log('Renumber lines')
-          }}
-          onLint={() => {
-            // TODO: Implement syntax checking
-            setConsoleOutput(prev => [...prev, 'Syntax check: OK'])
-          }}
-          speed={speed}
-          onSpeedChange={handleSpeedChange}
-        />
-        
-        {/* Monaco Editor - 80% of remaining height */}
-        <div className="h-[80%]">
-          <MonacoBasicEditor
-            value={code}
-            onChange={setCode}
-            currentLine={currentLine}
-            onCursorPositionChange={setCursorPosition}
-          />
-        </div>
-
-        {/* AI Summary Bar - 20% of remaining height */}
-        <div className="h-[20%] border-t border-[#3e3e42]">
-          <AISummaryBar
-            summary="This program demonstrates array usage in BASIC, showing how to declare arrays with DIM and access elements with subscripts."
+    <div className="h-full flex flex-col bg-[#1e1e1e]">
+      <div className="flex-1 flex min-h-0">
+        {/* Main Editor Area - 60% width */}
+        <div className="w-[60%] flex flex-col min-w-0">
+          {/* Control Panel */}
+          <ControlPanel
+            isRunning={isRunning}
+            onRun={handleRun}
+            onStop={handleStop}
+            onStep={handleStep}
+            onReset={() => {
+              setCurrentLine(null)
+              setIsRunning(false)
+              setConsoleOutput([])
+              setVariables(new Map())
+              setArrays(new Map())
+            }}
+            onNew={() => {
+              setCode('')
+              setCurrentLine(null)
+              setIsRunning(false)
+              setConsoleOutput([])
+              setVariables(new Map())
+              setArrays(new Map())
+            }}
+            onSave={() => {
+              // TODO: Implement save functionality
+              console.log('Save program')
+            }}
+            onLoad={() => {
+              // TODO: Implement load functionality
+              console.log('Load program')
+            }}
+            onList={() => {
+              // TODO: Implement list functionality
+              setConsoleOutput(prev => [...prev, ...code.split('\n')])
+            }}
+            onRenumber={() => {
+              // TODO: Implement renumber functionality
+              console.log('Renumber lines')
+            }}
+            onLint={() => {
+              // TODO: Implement syntax checking
+              setConsoleOutput(prev => [...prev, 'Syntax check: OK'])
+            }}
             onConvert={() => {
               console.log('Convert to modern language')
             }}
             onAIAssist={() => {
               console.log('AI Assistant')
             }}
+            onZoomIn={increaseFontSize}
+            onZoomOut={decreaseFontSize}
           />
-        </div>
-      </div>
+          
+          {/* Monaco Editor - Fills remaining space */}
+          <div className="flex-1 border-t border-[#3e3e42] pt-2">
+            <MonacoBasicEditor
+              value={code}
+              onChange={setCode}
+              currentLine={currentLine}
+              onCursorPositionChange={setCursorPosition}
+              fontSize={fontSize}
+            />
+          </div>
 
-      {/* Educational Panel - 40% width */}
-      <div className="w-[40%] border-l border-[#2d2d30] bg-[#252526] flex flex-col">
-        {/* Variables & Arrays Panel - Top half */}
-        <div className="h-1/2 border-b border-[#3e3e42]">
-          <VariablesArraysPanel
+          <StatusBar
+            line={cursorPosition.line}
+            column={cursorPosition.column}
+            status={status || 'READY'}
+            version={version || 'v1.0.0'}
+            user={user || 'user'}
+          />
+
+          {/* AI Summary Bar */}
+          <div className="h-[20%] border-t border-[#3e3e42]">
+            <AISummaryBar
+              summary="This program asks for the user's name and age, then provides a response based on their age."
+            />
+          </div>
+        </div>
+
+        {/* Educational Panel - 40% width */}
+        <div className="w-[40%] border-l border-[#2d2d30] bg-[#252526] flex flex-col">
+          <EducationalPanel
             variables={variables}
             arrays={arrays}
-            currentLine={currentLine}
-          />
-        </div>
-        
-        {/* Console Output Panel - Bottom half */}
-        <div className="h-1/2">
-          <ConsoleOutputPanel
             consoleOutput={consoleOutput}
-            currentLine={currentLine}
             isRunning={isRunning}
-            onInputSubmit={(input) => {
-              setConsoleOutput(prev => [...prev, `? ${input}`])
-            }}
-            waitingForInput={false}
+            isAwaitingInput={isAwaitingInput}
+            inputPrompt={inputPrompt}
+            onInputSubmit={handleInputSubmit}
           />
         </div>
       </div>
-
-      {/* Input Dialog */}
-      <InputDialog
-        isOpen={inputDialog.isOpen}
-        prompt={inputDialog.prompt}
-        onSubmit={handleInputSubmit}
-        onCancel={handleInputCancel}
-      />
     </div>
   )
 }

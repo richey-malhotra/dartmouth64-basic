@@ -1,8 +1,9 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Button } from '../../components/ui/button'
 import { 
   Code2, 
   FolderOpen, 
@@ -28,11 +29,20 @@ export default function ProtectedLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [fontSize, setFontSize] = useState(16);
+  const [status, setStatus] = useState('READY');
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--monaco-font-size', `${fontSize}px`);
+  }, [fontSize]);
+
+  const increaseFontSize = () => setFontSize(size => Math.min(size + 1, 24));
+  const decreaseFontSize = () => setFontSize(size => Math.max(size - 1, 10));
 
   return (
-    <div className="h-screen flex bg-[#1e1e1e]">
+    <div className="h-screen flex bg-background">
       {/* VS Code-style Activity Bar */}
-      <div className="w-14 bg-[#333333] border-r border-[#2d2d30] flex flex-col">
+      <div className="w-14 bg-card border-r border-border flex flex-col">
         {/* Navigation Icons */}
         <div className="flex-1 py-2">
           {navigation.map((item) => {
@@ -60,48 +70,6 @@ export default function ProtectedLayout({
           })}
         </div>
 
-        {/* Font Size Controls */}
-        <div className="border-t border-[#2d2d30] py-2">
-          <button
-            onClick={() => {
-              // Target Monaco editor via CSS custom property
-              const root = document.documentElement;
-              const currentSize = parseInt(getComputedStyle(root).getPropertyValue('--monaco-font-size')) || 14;
-              const newSize = Math.min(currentSize + 1, 24);
-              root.style.setProperty('--monaco-font-size', newSize + 'px');
-              
-              // Also directly update Monaco if loaded
-              const monacoElements = document.querySelectorAll('.monaco-editor .view-lines');
-              monacoElements.forEach(element => {
-                (element as HTMLElement).style.fontSize = newSize + 'px';
-              });
-            }}
-            className="activity-bar-item available"
-            title="Increase Editor Font Size"
-          >
-            <Plus size={24} strokeWidth={2} />
-          </button>
-          <button
-            onClick={() => {
-              // Target Monaco editor via CSS custom property
-              const root = document.documentElement;
-              const currentSize = parseInt(getComputedStyle(root).getPropertyValue('--monaco-font-size')) || 14;
-              const newSize = Math.max(currentSize - 1, 10);
-              root.style.setProperty('--monaco-font-size', newSize + 'px');
-              
-              // Also directly update Monaco if loaded
-              const monacoElements = document.querySelectorAll('.monaco-editor .view-lines');
-              monacoElements.forEach(element => {
-                (element as HTMLElement).style.fontSize = newSize + 'px';
-              });
-            }}
-            className="activity-bar-item available"
-            title="Decrease Editor Font Size"
-          >
-            <Minus size={24} strokeWidth={2} />
-          </button>
-        </div>
-
         {/* Logout Button */}
         <div className="pb-2">
           <Link
@@ -116,28 +84,16 @@ export default function ProtectedLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar */}
-        <div className="h-9 bg-[#2d2d30] border-b border-[#3e3e42] flex items-center justify-between px-4 text-sm">
-          <div className="flex items-center space-x-4">
-            <span className="text-[#cccccc] font-medium">RBASIC-D64 Editor</span>
-          </div>
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3">
-              <div className={`w-3 h-3 rounded-full ${
-                pathname === '/editor' ? 'bg-[#4ec9b0]' : 'bg-[#969696]'
-              }`}></div>
-              <span className="text-[#cccccc] font-medium">
-                {pathname === '/editor' ? 'READY' : 'INACTIVE'}
-              </span>
-            </div>
-            <span className="text-[#cccccc] font-mono">v1.0.0</span>
-            <span className="text-[#cccccc] font-mono">@user</span>
-          </div>
-        </div>
-
+        {/* Top Header Bar - Removed for a cleaner look, integrated into ControlPanel */}
+        
         {/* Page Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {children}
+          {React.cloneElement(children as React.ReactElement, {
+            setStatus,
+            status,
+            version: 'v1.0.0',
+            user: 'user',
+          })}
         </div>
       </div>
     </div>
