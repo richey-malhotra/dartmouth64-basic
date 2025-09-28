@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Editor, { Monaco } from '@monaco-editor/react'
-import * as monaco from 'monaco-editor'
+import dynamic from 'next/dynamic'
+import type { Monaco } from '@monaco-editor/react'
+import type * as MonacoModule from 'monaco-editor'
 
 interface MonacoBasicEditorProps {
   value: string
@@ -10,10 +11,14 @@ interface MonacoBasicEditorProps {
   currentLine?: number | null
   onCursorPositionChange?: (position: { line: number; column: number }) => void
   fontSize?: number
+  stopPoints?: number[]
+  onToggleStopPoint?: (line: number) => void
 }
 
+const DEFAULT_FONT_SIZE = 17
+
 // Language configuration for BASIC
-const basicLanguageConfiguration: monaco.languages.LanguageConfiguration = {
+const basicLanguageConfiguration: MonacoModule.languages.LanguageConfiguration = {
   comments: {
     lineComment: 'REM',
   },
@@ -31,7 +36,7 @@ const basicLanguageConfiguration: monaco.languages.LanguageConfiguration = {
 }
 
 // Dartmouth 64 BASIC Language Definition for Monaco Monarch
-const basicLanguageDefinition: monaco.languages.IMonarchLanguage = {
+const basicLanguageDefinition: MonacoModule.languages.IMonarchLanguage = {
   // Set defaultToken to invalid to see what we do not tokenize yet
   defaultToken: 'invalid',
   
@@ -93,7 +98,7 @@ const basicLanguageDefinition: monaco.languages.IMonarchLanguage = {
 }
 
 // Theme for BASIC syntax highlighting (VS Code Dark)
-const basicTheme: monaco.editor.IStandaloneThemeData = {
+const basicTheme: MonacoModule.editor.IStandaloneThemeData = {
   base: 'vs-dark',
   inherit: true,
   rules: [
@@ -127,91 +132,124 @@ const basicTheme: monaco.editor.IStandaloneThemeData = {
   },
 }
 
-export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositionChange, fontSize }: MonacoBasicEditorProps) {
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+const MonacoEditor = dynamic(async () => {
+  const mod = await import('@monaco-editor/react')
+  return mod.default
+}, {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-[#0f1526]" />,
+})
+
+let completionProviderRegistered = false
+
+export function MonacoBasicEditor({
+  value,
+  onChange,
+  currentLine,
+  onCursorPositionChange,
+  fontSize,
+  stopPoints = [],
+  onToggleStopPoint
+}: MonacoBasicEditorProps) {
+  const editorRef = useRef<MonacoModule.editor.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Monaco | null>(null)
+  const stopDecorationsRef = useRef<string[]>([])
+  const disposablesRef = useRef<MonacoModule.IDisposable[]>([])
+  const toggleStopPointRef = useRef(onToggleStopPoint)
   const languageId = 'dartmouth-basic'
 
-  // Initialize Monaco with BASIC language
-  const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    editorRef.current = editor
-    monacoRef.current = monaco
+  useEffect(() => {
+    toggleStopPointRef.current = onToggleStopPoint
+  }, [onToggleStopPoint])
 
-    // Register Dartmouth BASIC language
-    if (!monaco.languages.getLanguages().find(lang => lang.id === languageId)) {
-      monaco.languages.register({ id: languageId })
-      
-      // Set the Monarch tokenizer with the complete language definition
-      monaco.languages.setMonarchTokensProvider(languageId, basicLanguageDefinition)
-      
-      // Set language configuration
-      monaco.languages.setLanguageConfiguration(languageId, basicLanguageConfiguration)
-      
-      // Define custom theme
-      monaco.editor.defineTheme('basic-theme', basicTheme)
-      
-      // Register completion item provider for BASIC intellisense
-      monaco.languages.registerCompletionItemProvider(languageId, {
+  const registerBasicLanguage = (monacoInstance: Monaco) => {
+    if (!monacoInstance.languages.getLanguages().some(lang => lang.id === languageId)) {
+      monacoInstance.languages.register({ id: languageId })
+    }
+
+    monacoInstance.languages.setMonarchTokensProvider(languageId, basicLanguageDefinition)
+    monacoInstance.languages.setLanguageConfiguration(languageId, basicLanguageConfiguration)
+    monacoInstance.editor.defineTheme('basic-theme', basicTheme)
+
+    if (!completionProviderRegistered) {
+      monacoInstance.languages.registerCompletionItemProvider(languageId, {
         provideCompletionItems: (model, position) => {
-          const word = model.getWordUntilPosition(position);
+          const word = model.getWordUntilPosition(position)
           const range = {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
             startColumn: word.startColumn,
             endColumn: word.endColumn,
-          };
+          }
           const suggestions = [
-            // Keywords
             ...(basicLanguageDefinition.keywords ?? []).map((keyword: string) => ({
               label: keyword,
-              kind: monaco.languages.CompletionItemKind.Keyword,
+              kind: monacoInstance.languages.CompletionItemKind.Keyword,
               insertText: keyword,
               documentation: `BASIC keyword: ${keyword}`,
-              range: range,
+              range,
             })),
-            // Functions
             ...(basicLanguageDefinition.functions ?? []).map((func: string) => ({
               label: func,
-              kind: monaco.languages.CompletionItemKind.Function,
-              insertText: `${func}()`,
-              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              kind: monacoInstance.languages.CompletionItemKind.Function,
+              insertText: `${func}()` ,
+              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               documentation: `BASIC function: ${func}`,
-              range: range,
+              range,
             })),
-            // Common BASIC snippets
             {
               label: 'FOR-NEXT',
-              kind: monaco.languages.CompletionItemKind.Snippet,
+              kind: monacoInstance.languages.CompletionItemKind.Snippet,
               insertText: 'FOR ${1:I} = ${2:1} TO ${3:10}\n\t${4:PRINT I}\nNEXT ${1:I}',
-              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               documentation: 'FOR-NEXT loop structure',
-              range: range,
+              range,
             },
             {
               label: 'IF-THEN',
-              kind: monaco.languages.CompletionItemKind.Snippet,
+              kind: monacoInstance.languages.CompletionItemKind.Snippet,
               insertText: 'IF ${1:condition} THEN ${2:statement}',
-              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               documentation: 'IF-THEN conditional statement',
-              range: range,
-            }
+              range,
+            },
           ]
-          
+
           return { suggestions }
-        }
+        },
       })
+
+      completionProviderRegistered = true
     }
+  }
+
+  const handleBeforeMount = (monacoInstance: Monaco) => {
+    registerBasicLanguage(monacoInstance)
+  }
+
+  // Initialize Monaco with BASIC language
+  const handleEditorDidMount = (editor: MonacoModule.editor.IStandaloneCodeEditor, monacoInstance: Monaco) => {
+    editorRef.current = editor
+    monacoRef.current = monacoInstance
+
+    monacoInstance.editor.setTheme('basic-theme')
+
+    const size = fontSize ?? DEFAULT_FONT_SIZE
 
     // Set editor options for educational experience
     editor.updateOptions({
-      fontSize: 14,
-      lineNumbers: 'off', // BASIC has its own line numbers
+      fontSize: size,
+      lineHeight: size * 1.5,
+      padding: {
+        top: size / 2,
+        bottom: size / 2,
+      },
+      lineNumbers: 'off',
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       wordWrap: 'on',
-      lineDecorationsWidth: 10,
-      lineNumbersMinChars: 0,
-      glyphMargin: false,
+      lineDecorationsWidth: 20,
+      glyphMargin: true,
       folding: false,
       rulers: [],
       overviewRulerBorder: false,
@@ -219,17 +257,30 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
       overviewRulerLanes: 0,
       smoothScrolling: true,
       cursorSmoothCaretAnimation: 'on',
+      cursorStyle: 'block',
+      cursorBlinking: 'blink',
     })
 
     // Track cursor position changes
     if (onCursorPositionChange) {
-      editor.onDidChangeCursorPosition((e) => {
+      const cursorDisposable = editor.onDidChangeCursorPosition((e: MonacoModule.editor.ICursorPositionChangedEvent) => {
         onCursorPositionChange({
           line: e.position.lineNumber,
           column: e.position.column
         })
       })
+      disposablesRef.current.push(cursorDisposable)
     }
+
+    const mouseDownDisposable = editor.onMouseDown(event => {
+      if (
+        event.target.type === monacoInstance.editor.MouseTargetType.GUTTER_GLYPH_MARGIN &&
+        event.target.position?.lineNumber
+      ) {
+        toggleStopPointRef.current?.(event.target.position.lineNumber)
+      }
+    })
+    disposablesRef.current.push(mouseDownDisposable)
   }
 
   // Highlight current line during execution
@@ -262,8 +313,28 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
   }, [currentLine])
 
   useEffect(() => {
+    if (!editorRef.current || !monacoRef.current) {
+      return
+    }
+
+    const editor = editorRef.current
+    const monaco = monacoRef.current
+    const decorations = stopPoints.map(line => ({
+      range: new monaco.Range(line, 1, line, 1),
+      options: {
+        isWholeLine: true,
+        className: 'stop-point-line',
+        glyphMarginClassName: 'stop-point-glyph',
+        stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+      },
+    }))
+
+    stopDecorationsRef.current = editor.deltaDecorations(stopDecorationsRef.current, decorations)
+  }, [stopPoints])
+
+  useEffect(() => {
     if (editorRef.current) {
-      const newFontSize = fontSize || 14; // Default to 14 if undefined
+      const newFontSize = fontSize || DEFAULT_FONT_SIZE
       editorRef.current.updateOptions({
         fontSize: newFontSize,
         lineHeight: newFontSize * 1.5,
@@ -275,15 +346,28 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
     }
   }, [fontSize]);
 
+  useEffect(() => {
+    const editor = editorRef.current
+    return () => {
+      if (editor && stopDecorationsRef.current.length) {
+        editor.deltaDecorations(stopDecorationsRef.current, [])
+      }
+      disposablesRef.current.forEach(disposable => disposable.dispose())
+      disposablesRef.current = []
+    }
+  }, [])
+
   return (
-    <div className="h-full">
-      <Editor
+    <div className="h-full bg-[#0f1526]">
+      <MonacoEditor
         height="100%"
         language={languageId}
         theme="basic-theme"
         value={value}
-        onChange={(newValue) => onChange(newValue || '')}
+        onChange={(newValue: string | undefined) => onChange(newValue || '')}
         onMount={handleEditorDidMount}
+        beforeMount={handleBeforeMount}
+        loading={<div className="h-full w-full bg-[#0f1526]" />}
         options={{
           automaticLayout: true,
           contextmenu: true,
@@ -317,6 +401,42 @@ export function MonacoBasicEditor({ value, onChange, currentLine, onCursorPositi
         .current-line-execution-margin {
           background: linear-gradient(180deg, rgba(75, 192, 255, 0.85), rgba(201, 93, 245, 0.65)) !important;
           width: 4px !important;
+        }
+
+        .stop-point-line {
+          background: linear-gradient(90deg, rgba(123, 134, 255, 0.16), rgba(91, 227, 184, 0.06)) !important;
+        }
+
+        .stop-point-glyph {
+          position: relative;
+          width: 11px !important;
+          height: 11px !important;
+          margin-left: 4px;
+          border-radius: 9999px;
+          background: radial-gradient(circle at 40% 40%, rgba(124, 132, 255, 0.85), rgba(14, 21, 36, 0.2));
+          box-shadow: 0 0 3px rgba(112, 131, 255, 0.55);
+        }
+
+        .stop-point-glyph::after {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border-radius: inherit;
+          border: 1px solid rgba(124, 132, 255, 0.4);
+          opacity: 0.6;
+        }
+
+        .monaco-editor .margin {
+          background: linear-gradient(180deg, rgba(16, 24, 38, 0.78), rgba(11, 18, 29, 0.86));
+          box-shadow: inset -1px 0 0 rgba(91, 105, 148, 0.25);
+        }
+
+        .monaco-editor .glyph-margin {
+          width: 18px !important;
+        }
+
+        .monaco-editor .cursor.block {
+          background-color: rgba(236, 252, 255, 0.9) !important;
         }
       `}</style>
     </div>

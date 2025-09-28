@@ -13,7 +13,7 @@ export function ArrayVisualization({ arrays }: ArrayVisualizationProps) {
   if (arrayEntries.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground/70">
-        <div className="glass-panel border border-surface-divider/70 rounded-2xl px-6 py-5 text-center shadow-[0_18px_38px_-28px_rgba(16,24,46,0.85)]">
+  <div className="glass-panel card-surface border border-surface-divider/70 px-6 py-5 text-center shadow-[0_18px_38px_-28px_rgba(16,24,46,0.85)]">
           <div className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/60">Arrays</div>
           <div className="text-base text-foreground/85 mt-2">No arrays yet</div>
           <div className="text-xs text-muted-foreground/70 mt-1 uppercase tracking-wider">Use <span className="text-accentMagenta">DIM</span> to allocate</div>
@@ -43,7 +43,7 @@ function ArrayGrid({ array }: { array: ArrayState }) {
     const size = end - start + 1
     
     return (
-      <div className="glass-panel-strong border border-surface-divider/70 rounded-2xl px-4 py-4 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
+  <div className="glass-panel-strong card-surface border border-surface-divider/70 px-4 py-4 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-sm font-semibold text-foreground/90 tracking-wide">{name}</div>
@@ -103,7 +103,7 @@ function ArrayGrid({ array }: { array: ArrayState }) {
     const cols = colEnd - colStart + 1
     
     return (
-      <div className="glass-panel-strong border border-surface-divider/70 rounded-2xl px-4 py-4 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
+  <div className="glass-panel-strong card-surface border border-surface-divider/70 px-4 py-4 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-sm font-semibold text-foreground/90 tracking-wide">{name}</div>

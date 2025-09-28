@@ -36,7 +36,7 @@ export function VariablePanel({ variables, currentLine }: VariablePanelProps) {
   if (variableArray.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground/70">
-        <div className="glass-panel border border-surface-divider/70 rounded-2xl px-6 py-5 text-center shadow-[0_18px_38px_-28px_rgba(16,24,46,0.85)]">
+  <div className="glass-panel card-surface border border-surface-divider/70 px-6 py-5 text-center shadow-[0_18px_38px_-28px_rgba(16,24,46,0.85)]">
           <div className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/60">Variables</div>
           <div className="text-base text-foreground/85 mt-2">No variables yet</div>
           <div className="text-xs text-muted-foreground/70 mt-1 uppercase tracking-wider">Use <span className="text-accentCyan">LET</span> to declare</div>
@@ -52,13 +52,20 @@ export function VariablePanel({ variables, currentLine }: VariablePanelProps) {
           <div
             key={name}
             className={cn(
-              'relative px-4 py-3 rounded-2xl glass-panel-strong border border-surface-divider/70 transition-all duration-300 shadow-[0_18px_46px_-34px_rgba(15,21,38,0.85)]',
+              'relative px-4 py-3 glass-panel-strong card-surface border border-surface-divider/70 transition-all duration-300 shadow-[0_18px_46px_-34px_rgba(15,21,38,0.85)]',
               highlightedVars.has(name) && 'border-[rgba(75,192,255,0.6)] shadow-[0_22px_52px_-32px_rgba(75,192,255,0.65)]'
             )}
           >
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-sm font-semibold text-foreground/90 tracking-wide">{name}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground/90 tracking-wide">{name}</span>
+                  {(variable.lastChanged || variable.changed) && (
+                    <span className="text-[0.65rem] text-accentCyan/80 uppercase tracking-[0.25em]">
+                      {variable.lastChanged ? `Updated line ${variable.lastChanged}` : 'Recently updated'}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-1 text-xs uppercase tracking-[0.3em] text-muted-foreground/60">{variable.type}</div>
               </div>
               <div
@@ -74,11 +81,6 @@ export function VariablePanel({ variables, currentLine }: VariablePanelProps) {
                 )}
               </div>
             </div>
-            {(variable.lastChanged || variable.changed) && (
-              <div className="mt-2 text-[0.65rem] text-accentCyan/75 uppercase tracking-[0.25em]">
-                {variable.lastChanged ? `Updated on line ${variable.lastChanged}` : 'Recently updated'}
-              </div>
-            )}
           </div>
         ))}
       </div>

@@ -32,7 +32,7 @@ export function EducationalPanel({
   }
 
   return (
-    <div className="h-full flex flex-col glass-panel-strong border border-surface-divider/80 rounded-l-2xl bg-gradient-to-b from-[#12182A]/90 via-[#101625]/80 to-[#0e1420]/88">
+  <div className="h-full flex flex-col glass-panel-strong card-surface border border-surface-divider/80 bg-gradient-to-b from-[#12182A]/90 via-[#101625]/80 to-[#0e1420]/88">
       <div className="flex-1 flex flex-col min-h-0">
         {/* Tab Navigation */}
         <div className="h-16 flex items-center border-b border-surface-divider/70 px-3 gap-2">
@@ -62,7 +62,7 @@ export function EducationalPanel({
 
         {/* Tab Content */}
         <div className="flex-1 overflow-hidden px-3 pb-3">
-          <div className="h-full glass-panel rounded-2xl border border-surface-divider/60 p-0.5">
+          <div className="h-full glass-panel card-surface border border-surface-divider/60 p-0.5">
             <div className="h-full rounded-[1rem] bg-gradient-to-b from-white/2 via-white/3 to-white/1.5 dark:from-white/3 dark:via-white/2 dark:to-transparent">
           {activeTab === 'variables' && (
             <VariablePanel variables={variables} />

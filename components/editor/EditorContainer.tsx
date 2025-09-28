@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { MonacoBasicEditor } from './MonacoBasicEditor'
 import { ControlPanel } from './ControlPanel'
 import { EducationalPanel } from './EducationalPanel'
@@ -16,20 +16,22 @@ import type {
 type VariablesMap = Map<string, VariableState>
 type ArraysMap = Map<string, ArrayState>
 
+const MIN_FONT_SIZE = 10
+const MAX_FONT_SIZE = 24
+const DEFAULT_FONT_SIZE = Math.round((MIN_FONT_SIZE + MAX_FONT_SIZE) / 2)
+
 export function EditorContainer({
   setStatus,
   status,
-  version,
   user,
 }: {
   setStatus?: (status: string) => void
   status?: 'READY' | 'RUNNING'
-  version?: string
   user?: string
 }) {
-  const [fontSize, setFontSize] = useState(16)
-  const increaseFontSize = () => setFontSize(size => Math.min(size + 1, 24))
-  const decreaseFontSize = () => setFontSize(size => Math.max(size - 1, 10))
+  const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
+  const increaseFontSize = () => setFontSize(size => Math.min(size + 1, MAX_FONT_SIZE))
+  const decreaseFontSize = () => setFontSize(size => Math.max(size - 1, MIN_FONT_SIZE))
 
   const [code, setCode] = useState(`10 PRINT "WHAT IS YOUR NAME?"
 20 INPUT N$
@@ -163,8 +165,33 @@ export function EditorContainer({
   const [inputPrompt, setInputPrompt] = useState('')
   const inputPromiseResolveRef = useRef<((value: string) => void) | null>(null)
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 })
+  const [stopPoints, setStopPoints] = useState<number[]>([])
   
   const interpreterRef = useRef<InterpreterLike | null>(null)
+
+  const { totalLines, minimumSteps, executionLabel, deterministic } = useMemo(() => {
+    const lines = code.split('\n').filter(line => line.trim().length > 0)
+    const upperSource = code.toUpperCase()
+    const hasInput = /\bINPUT\b/.test(upperSource)
+    const hasRandom = /\bRND\b/.test(upperSource)
+    const deterministic = !hasInput && !hasRandom
+
+    let executionLabel = 'Adaptive'
+    if (deterministic) {
+      executionLabel = 'Deterministic'
+    } else if (hasInput && !hasRandom) {
+      executionLabel = 'Input-Driven'
+    } else if (!hasInput && hasRandom) {
+      executionLabel = 'Randomized'
+    }
+
+    return {
+      totalLines: lines.length,
+      minimumSteps: deterministic ? lines.length : null,
+      executionLabel,
+      deterministic,
+    }
+  }, [code])
 
   // Handle execution state updates
   // Handle input requests (for INPUT statements)
@@ -183,6 +210,16 @@ export function EditorContainer({
     setIsAwaitingInput(false)
     setInputPrompt('')
     inputPromiseResolveRef.current = null
+  }, [])
+
+  const handleToggleStopPoint = useCallback((line: number) => {
+    setStopPoints(prev => {
+      const exists = prev.includes(line)
+      if (exists) {
+        return prev.filter(item => item !== line)
+      }
+      return [...prev, line].sort((a, b) => a - b)
+    })
   }, [])
 
   // Create and configure interpreter with dynamic imports
@@ -307,10 +344,12 @@ export function EditorContainer({
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-[#090d16] via-[#0d111c] to-[#0f1524]">
-      <div className="flex-1 flex min-h-0 gap-6 px-4 pb-6">
+    <div className="relative h-full flex flex-col bg-gradient-to-br from-[#090d16] via-[#0d111c] to-[#0f1524] overflow-hidden">
+      <div className="editor-aurora" />
+
+      <div className="flex-1 grid grid-cols-[3fr,2fr] min-h-0 gap-4 lg:gap-5 px-3 lg:px-5 pb-5 relative z-10">
         {/* Main Editor Area - 60% width */}
-  <div className="w-[60%] flex flex-col min-w-0 min-h-0 gap-4 pt-4">
+        <div className="col-span-1 flex flex-col min-w-0 min-h-0 gap-3.5 lg:gap-4 pt-3">
           {/* Control Panel */}
           <ControlPanel
             isRunning={isRunning}
@@ -323,6 +362,7 @@ export function EditorContainer({
               setConsoleOutput([])
               setVariables(new Map<string, VariableState>())
               setArrays(new Map<string, ArrayState>())
+              setStopPoints([])
             }}
             onNew={() => {
               setCode('')
@@ -331,6 +371,7 @@ export function EditorContainer({
               setConsoleOutput([])
               setVariables(new Map<string, VariableState>())
               setArrays(new Map<string, ArrayState>())
+              setStopPoints([])
             }}
             onSave={() => {
               // TODO: Implement save functionality
@@ -353,7 +394,7 @@ export function EditorContainer({
               setConsoleOutput(prev => [...prev, 'Syntax check: OK'])
             }}
             onConvert={() => {
-              console.log('Convert to modern language')
+              console.log('RBASIC ↔ PYTHON')
             }}
             onAIAssist={() => {
               console.log('AI Assistant')
@@ -362,28 +403,58 @@ export function EditorContainer({
             onZoomOut={decreaseFontSize}
           />
           
+          {/* Execution Strip */}
+          <div className="px-4 lg:px-6">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] uppercase tracking-[0.45em] text-white/40 font-semibold">Runway</span>
+              <div className="relative flex-1 h-2.5 overflow-hidden rounded-full border border-white/10 bg-black/40">
+                <div
+                  className={`absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#34d399] via-[#60a5fa] to-transparent ${
+                    isRunning ? 'animate-[execution-glow_1.6s_ease-in-out_infinite]' : 'translate-x-0 opacity-60'
+                  }`}
+                />
+                {!isRunning && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                )}
+              </div>
+              <span className="text-xs font-medium text-white/70 min-w-[70px] text-right">
+                {isRunning ? `Line ${currentLine ?? '--'}` : 'Idle'}
+              </span>
+            </div>
+          </div>
+
           {/* Monaco Editor - Fills remaining space */}
-          <div className="flex-1 min-h-0 rounded-3xl glass-panel border border-surface-divider/70 shadow-[0_22px_50px_-35px_rgba(12,18,32,0.8)] overflow-hidden">
-            <MonacoBasicEditor
-              value={code}
-              onChange={setCode}
-              currentLine={currentLine}
-              onCursorPositionChange={setCursorPosition}
-              fontSize={fontSize}
-            />
+          <div className="relative flex-1 min-h-0">
+            <div className="absolute inset-0 -translate-y-6 rounded-[36px] bg-gradient-to-br from-[#38bdf8]/25 via-transparent to-transparent blur-3xl opacity-60 pointer-events-none" />
+            <div className="relative h-full glass-panel card-surface border border-surface-divider/70 shadow-[0_22px_50px_-35px_rgba(12,18,32,0.8)] overflow-hidden">
+              <div className="editor-spotlight" />
+              <div className="retro-scanlines" />
+              <MonacoBasicEditor
+                value={code}
+                onChange={setCode}
+                currentLine={currentLine}
+                onCursorPositionChange={setCursorPosition}
+                fontSize={fontSize}
+                stopPoints={stopPoints}
+                onToggleStopPoint={handleToggleStopPoint}
+              />
+            </div>
           </div>
 
           <StatusBar
             line={cursorPosition.line}
             column={cursorPosition.column}
             status={status || 'READY'}
-            version={version || 'v1.0.0'}
             user={user || 'user'}
+            totalLines={totalLines}
+            minimumSteps={minimumSteps}
+            executionLabel={executionLabel}
+            deterministic={deterministic}
           />
         </div>
 
         {/* Educational Panel - 40% width */}
-        <div className="w-[40%] flex flex-col pt-4 pr-2 min-h-0">
+        <div className="col-span-1 flex flex-col pt-3 min-h-0 min-w-0 gap-3">
           <EducationalPanel
             variables={variables}
             arrays={arrays}
@@ -392,13 +463,13 @@ export function EditorContainer({
         </div>
       </div>
 
-      <div className="px-4 pb-6 flex gap-6">
-        <div className="w-[60%] flex-shrink-0">
+      <div className="px-3 lg:px-5 pb-5 grid grid-cols-[3fr,2fr] gap-4 lg:gap-5 relative z-10">
+        <div className="col-span-1 min-w-0">
           <AISummaryBar
             summary="This program asks for the user's name and age, then provides a response based on their age."
           />
         </div>
-        <div className="w-[40%] flex-shrink-0 pr-2">
+        <div className="col-span-1 min-w-0">
           <InputPanel
             prompt={inputPrompt}
             isAwaitingInput={isAwaitingInput}

@@ -56,7 +56,7 @@ export function ConsolePanel({ output, isActive }: ConsolePanelProps) {
   }, [isActive, triggerHighlight]);
 
   return (
-    <div className="h-full flex flex-col glass-panel-strong border border-surface-divider/70 rounded-2xl shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
+  <div className="h-full flex flex-col glass-panel-strong card-surface border border-surface-divider/70 shadow-[0_20px_48px_-32px_rgba(16,24,46,0.9)]">
       {/* Console Output */}
       <div 
         ref={scrollRef}
@@ -64,7 +64,7 @@ export function ConsolePanel({ output, isActive }: ConsolePanelProps) {
       >
         {output.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground/70">
-            <div className="glass-panel border border-surface-divider/70 rounded-2xl px-6 py-5 text-center">
+            <div className="glass-panel card-surface border border-surface-divider/70 px-6 py-5 text-center">
               <div className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/60">Console</div>
               <div className="text-base text-foreground/85 mt-2">No output yet</div>
               <div className="text-xs text-muted-foreground/70 mt-1 uppercase tracking-[0.25em]">Use <span className="text-accentEmerald">PRINT</span> to speak</div>
