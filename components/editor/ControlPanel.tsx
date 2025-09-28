@@ -70,7 +70,7 @@ export function ControlPanel(props: ControlPanelProps) {
   const paused = Boolean(isPaused)
 
   return (
-  <div className="relative z-20 px-3 lg:px-5 py-2 flex flex-wrap lg:flex-nowrap items-center gap-2.5 lg:gap-3.5 glass-panel-strong card-surface accent-glow bg-gradient-to-r from-[#101322]/92 via-[#111727]/78 to-transparent border border-white/10 shadow-[0_25px_45px_-30px_rgba(15,23,42,0.9)] transition-shadow duration-500 overflow-hidden">
+  <div className="relative z-20 w-full px-[3px] py-2 flex flex-wrap lg:flex-nowrap items-center gap-2.5 lg:gap-3.5 lg:justify-between glass-panel-strong card-surface accent-glow bg-gradient-to-r from-[#101322]/92 via-[#111727]/78 to-transparent border border-white/10 shadow-[0_25px_45px_-30px_rgba(15,23,42,0.9)] transition-shadow duration-500 overflow-hidden">
       {/* Execution Controls */}
       <div
         className={cn(
@@ -246,9 +246,6 @@ export function ControlPanel(props: ControlPanelProps) {
           <Wand2 className="w-5 h-5" />
         </Button>
       </div>
-
-      <div className="hidden lg:flex flex-1" />
-
       {/* Font Size Controls */}
       <div
         className={cn(
